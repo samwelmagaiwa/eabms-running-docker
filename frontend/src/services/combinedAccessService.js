@@ -305,7 +305,11 @@ class CombinedAccessService {
       const response = await apiClient.post('/hod/combined-access-requests/search', criteria)
 
       if (response.data && response.data.success) {
-        devLog.debug('✅ Search completed successfully:', response.data.data?.length || 0, 'results')
+        devLog.debug(
+          '✅ Search completed successfully:',
+          response.data.data?.length || 0,
+          'results'
+        )
         return {
           success: true,
           data: response.data

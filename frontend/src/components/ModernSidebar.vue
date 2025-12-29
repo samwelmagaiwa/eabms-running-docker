@@ -777,11 +777,14 @@
                   <div v-if="showUserGuide" class="px-4 pb-4">
                     <div class="bg-white rounded-xl border border-blue-100 p-4">
                       <p class="text-xs text-gray-500 mb-2">
-                        Showing guidance for: <span class="font-medium">{{ userGuideRoleLabel }}</span>
+                        Showing guidance for:
+                        <span class="font-medium">{{ userGuideRoleLabel }}</span>
                       </p>
                       <div class="space-y-3">
                         <div v-for="(section, idx) in userGuideSections" :key="idx">
-                          <p class="text-sm font-semibold text-gray-800 mb-1">{{ section.title }}</p>
+                          <p class="text-sm font-semibold text-gray-800 mb-1">
+                            {{ section.title }}
+                          </p>
                           <ul class="list-disc pl-5 text-sm text-gray-700 space-y-1">
                             <li v-for="(item, i) in section.items" :key="i">{{ item }}</li>
                           </ul>
@@ -1335,9 +1338,7 @@
       }
 
       const roleForGuide = computed(() => {
-        return (
-          piniaAuthStore?.userRole || userRole?.value || stableUserRole?.value || ROLES.STAFF
-        )
+        return piniaAuthStore?.userRole || userRole?.value || stableUserRole?.value || ROLES.STAFF
       })
 
       const userGuideRoleLabel = computed(() => {

@@ -82,10 +82,7 @@ const ictOfficerService = {
           message: response.data.message
         }
       } else {
-        devLog.error(
-          '❌ IctOfficerService: Failed to load access requests:',
-          response.data.message
-        )
+        devLog.error('❌ IctOfficerService: Failed to load access requests:', response.data.message)
         return {
           success: false,
           message: response.data.message || 'Failed to load access requests'

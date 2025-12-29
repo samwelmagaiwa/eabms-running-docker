@@ -6426,7 +6426,8 @@
         const comment = (this.grantAccessComment || '').trim() || '[YOUR COMMENT HERE]'
 
         // Avoid "Access access" when types falls back to "Access"
-        const accessText = String(types).toLowerCase() === 'access' ? 'access request' : `${types} access`
+        const accessText =
+          String(types).toLowerCase() === 'access' ? 'access request' : `${types} access`
 
         return `Dear ${name}, your ${accessText} has been GRANTED and is now ACTIVE. Ref: ${ref}. Note: ${comment} - EABMS`
       },
