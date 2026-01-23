@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (! Schema::hasTable('roles')) {
          Schema::create('roles', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique(); // admin, nurse, ict, etc.
@@ -27,6 +28,7 @@ return new class extends Migration
             $table->index('is_system_role');
             $table->index('is_deletable');
         });
+        }
     }
 
 

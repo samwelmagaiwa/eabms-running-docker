@@ -10,31 +10,40 @@
         <div class="relative z-10 flex flex-col items-up justify-up h-full p-8 text-white"></div>
         <!-- Enhanced S-curved design -->
         <svg
-          class="absolute right-0 top-0 h-full w-24 text-white"
+          class="absolute right-0 top-0 h-full w-32 text-white"
           viewBox="0 0 100 100"
           preserveAspectRatio="none"
         >
-          <path d="M0 0 C50 0 0 50 0 50 C0 50 50 100 100 100 L100 0 Z" fill="currentColor" />
+          <!-- Background Fill -->
+          <path d="M100 0 L100 100 L50 100 C 100 66 0 33 50 0 L 100 0 Z" fill="currentColor" />
+          <!-- Shining S-Curve Stroke -->
+          <path
+            d="M 50 100 C 100 66 0 33 50 0"
+            fill="none"
+            stroke="white"
+            stroke-width="1.5"
+            style="filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.9))"
+          />
         </svg>
       </div>
 
       <!-- Right side: Login Form -->
       <div class="w-full md:w-1/2 p-8 flex flex-col justify-center items-center">
-        <h1 class="text-4xl font-serif font-bold text-primary animate-fadeIn mb-4">
+        <h1 class="text-4xl font-serif font-bold text-primary animate-fadeIn mb-2">
           Muhimbili National Hospital
         </h1>
 
         <div
-          class="w-40 h-40 rounded-full overflow-hidden border-2 border-primary flex items-center justify-center mb-12"
+          class="logo-circle rounded-full overflow-hidden border-2 border-primary flex items-center justify-center mb-6"
         >
           <img
             src="/assets/images/logo.jpg"
             alt="Muhimbili Logo"
-            class="max-w-full max-h-full animate-flipX"
+            class="max-w-full max-h-full animate-flipX object-contain"
           />
         </div>
         <div class="w-full max-w-md">
-          <h2 class="text-2xl font-bold mb-6 text-center text-primary">Login</h2>
+          <h2 class="text-2xl font-bold mb-4 text-center text-primary">Login</h2>
 
           <!-- Error message display -->
           <div
@@ -392,5 +401,22 @@
 
   .background-animate {
     animation: example 5s linear 2s infinite alternate;
+  }
+
+  /* Ensure the login logo container is always a perfect circle,
+     regardless of global width utility overrides or screen size. */
+  .logo-circle {
+    /* Keep the container perfectly circular but let it scale with viewport width. */
+    width: min(40vw, 10rem);
+    height: min(40vw, 10rem);
+    border-radius: 9999px;
+    flex-shrink: 0; /* Prevent vertical squashing */
+  }
+
+  @media (max-width: 768px) {
+    .logo-circle {
+      width: min(50vw, 9rem);
+      height: min(50vw, 9rem);
+    }
   }
 </style>

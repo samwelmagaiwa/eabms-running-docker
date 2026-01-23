@@ -1,0 +1,286 @@
+ID,Module,Method,Endpoint URI,Description / Action,Required Roles,PII Data,Status
+1,System,GET,/api,Generated::Ancv4Vabqbgk0J1Y,API User,No,Active
+2,Access-rights-approval,POST,/api/access-rights-approval,Access Rights Approval Store,API User,No,Active
+3,Access-rights-approval,GET,/api/access-rights-approval/{userAccessId},Access Rights Approval Show,API User,Yes,Active
+4,Access-rights-approval,PUT,/api/access-rights-approval/{userAccessId},Access Rights Approval Update,API User,Yes,Active
+5,Admin,GET,/api/admin/dashboard-stats,Admin Dashboard Stats,API User,No,Active
+6,Admin,GET,/api/admin/departments,Admin Departments Index,API User,No,Active
+7,Admin,POST,/api/admin/departments,Admin Departments Store,API User,No,Active
+8,Admin,GET,/api/admin/departments/create-form-data,Admin Departments Create Form Data,API User,No,Active
+9,Admin,GET,/api/admin/departments/eligible-divisional-directors,Admin Departments Eligible Divisional Directors,API User,No,Active
+10,Admin,GET,/api/admin/departments/eligible-hods,Admin Departments Eligible Hods,API User,No,Active
+11,Admin,GET,/api/admin/departments/{department},Admin Departments Show,API User,No,Active
+12,Admin,PUT,/api/admin/departments/{department},Admin Departments Update,API User,No,Active
+13,Admin,DELETE,/api/admin/departments/{department},Admin Departments Destroy,API User,No,Active
+14,Admin,PATCH,/api/admin/departments/{department}/toggle-status,Admin Departments Toggle Status,API User,No,Active
+15,Admin,GET,/api/admin/onboarding/stats,Admin Onboarding Stats,API User,No,Active
+16,Admin,GET,/api/admin/permissions,Admin Permissions Index,API User,No,Active
+17,Admin,GET,/api/admin/roles,Admin Roles Index,API User,No,Active
+18,Admin,POST,/api/admin/roles,Admin Roles Store,API User,No,Active
+19,Admin,GET,/api/admin/roles/{role},Admin Roles Show,API User,No,Active
+20,Admin,PUT,/api/admin/roles/{role},Admin Roles Update,API User,No,Active
+21,Admin,DELETE,/api/admin/roles/{role},Admin Roles Destroy,API User,No,Active
+22,Admin,GET,/api/admin/user-management,Admin User Management Index,API User,Yes,Active
+23,Admin,POST,/api/admin/user-management,Admin User Management Store,API User,Yes,Active
+24,Admin,GET,/api/admin/user-management/roles,Admin User Management Roles,API User,Yes,Active
+25,Admin,GET,/api/admin/user-management/statistics,Admin User Management Statistics,API User,Yes,Active
+26,Admin,GET,/api/admin/user-management/{user},Admin User Management Show,API User,Yes,Active
+27,Admin,PUT,/api/admin/user-management/{user},Admin User Management Update,API User,Yes,Active
+28,Admin,DELETE,/api/admin/user-management/{user},Admin User Management Destroy,API User,Yes,Active
+29,Admin,POST,/api/admin/user-management/{user}/toggle-status,Admin User Management Toggle Status,API User,Yes,Active
+30,Admin,GET,/api/admin/users,Admin Users Index,API User,Yes,Active
+31,Admin,POST,/api/admin/users,Admin Users Store,API User,Yes,Active
+32,Admin,POST,/api/admin/users/bulk-reset-onboarding,Admin Users Bulk Reset Onboarding,API User,Yes,Active
+33,Admin,GET,/api/admin/users/create-form-data,Admin Users Create Form Data,API User,Yes,Active
+34,Admin,GET,/api/admin/users/departments,Admin Users Departments,API User,Yes,Active
+35,Admin,POST,/api/admin/users/reset-onboarding,Admin Users Reset Onboarding,API User,Yes,Active
+36,Admin,GET,/api/admin/users/roles,Admin Users Roles,API User,Yes,Active
+37,Admin,GET,/api/admin/users/statistics,Admin Users Statistics,API User,Yes,Active
+38,Admin,POST,/api/admin/users/validate,Admin Users Validate,API User,Yes,Active
+39,Admin,GET,/api/admin/users/{user},Admin Users Show,API User,Yes,Active
+40,Admin,PUT,/api/admin/users/{user},Admin Users Update,API User,Yes,Active
+41,Admin,DELETE,/api/admin/users/{user},Admin Users Destroy,API User,Yes,Active
+42,Admin,PATCH,/api/admin/users/{user}/toggle-status,Admin Users Toggle Status,API User,Yes,Active
+43,Api-docs,GET,/api/api-docs,Api Docs,API User,No,Active
+44,Booking-service,GET,/api/booking-service/bookings,Bookings Index,API User,No,Active
+45,Booking-service,POST,/api/booking-service/bookings,Bookings Store,API User,No,Active
+46,Booking-service,PUT,/api/booking-service/bookings/{bookingId}/edit-rejected,Booking Service Edit Rejected,API User,No,Active
+47,Booking-service,POST,/api/booking-service/bookings/{bookingService}/approve,Booking Service Approve,API User,No,Active
+48,Booking-service,POST,/api/booking-service/bookings/{bookingService}/assessment/issuing,Booking Service Assessment Issuing,API User,No,Active
+49,Booking-service,POST,/api/booking-service/bookings/{bookingService}/assessment/receiving,Booking Service Assessment Receiving,API User,No,Active
+50,Booking-service,POST,/api/booking-service/bookings/{bookingService}/ict-approve,Booking Service Ict Approve,API User,No,Active
+51,Booking-service,POST,/api/booking-service/bookings/{bookingService}/ict-reject,Booking Service Ict Reject,API User,No,Active
+52,Booking-service,POST,/api/booking-service/bookings/{bookingService}/reject,Booking Service Reject,API User,No,Active
+53,Booking-service,GET,/api/booking-service/bookings/{booking},Bookings Show,API User,No,Active
+54,Booking-service,PUT|PATCH,/api/booking-service/bookings/{booking},Bookings Update,API User,No,Active
+55,Booking-service,DELETE,/api/booking-service/bookings/{booking},Bookings Destroy,API User,No,Active
+56,Booking-service,GET,/api/booking-service/can-submit-new-request,Booking Service Can Submit New Request,API User,No,Active
+57,Booking-service,GET,/api/booking-service/check-pending-requests,Booking Service Check Pending Requests,API User,No,Active
+58,Booking-service,GET,/api/booking-service/departments,Booking Service Departments,API User,No,Active
+59,Booking-service,GET,/api/booking-service/device-types,Booking Service Device Types,API User,No,Active
+60,Booking-service,GET,/api/booking-service/devices/{deviceInventoryId}/availability,Booking Service Device Availability,API User,No,Active
+61,Booking-service,GET,/api/booking-service/devices/{deviceInventoryId}/bookings,Booking Service Device Bookings,API User,No,Active
+62,Booking-service,GET,/api/booking-service/ict-approval-requests,Booking Service Ict Approval Requests,API User,No,Active
+63,Booking-service,GET,/api/booking-service/ict-pending-approvals,Booking Service Ict Pending Approvals,API User,No,Active
+64,Booking-service,POST,/api/booking-service/seed-departments,Booking Service Seed Departments,API User,No,Active
+65,Booking-service,GET,/api/booking-service/statistics,Booking Service Statistics,API User,No,Active
+66,Both-service-form,GET,/api/both-service-form,Both Service Form Index,API User,No,Active
+67,Both-service-form,POST,/api/both-service-form,Both Service Form Store,API User,No,Active
+68,Both-service-form,GET,/api/both-service-form/departments/list,Both Service Form Departments,API User,No,Active
+69,Both-service-form,GET,/api/both-service-form/hod/user-access-requests,Both Service Form Hod User Access Requests,API User,Yes,Active
+70,Both-service-form,GET,/api/both-service-form/module-requests,Both Service Form Module Requests Pending,API User,No,Active
+71,Both-service-form,GET,/api/both-service-form/module-requests-statistics,Both Service Form Module Requests Statistics,API User,No,Active
+72,Both-service-form,GET,/api/both-service-form/module-requests/{userAccessId},Both Service Form Module Requests Show,API User,Yes,Active
+73,Both-service-form,POST,/api/both-service-form/module-requests/{userAccessId}/divisional-approve,Both Service Form Module Requests Divisional Approve,API User,Yes,Active
+74,Both-service-form,POST,/api/both-service-form/module-requests/{userAccessId}/divisional-reject,Both Service Form Module Requests Divisional Reject,API User,Yes,Active
+75,Both-service-form,POST,/api/both-service-form/module-requests/{userAccessId}/head-of-it-approve,Both Service Form Module Requests Head Of It Approve,API User,Yes,Active
+76,Both-service-form,POST,/api/both-service-form/module-requests/{userAccessId}/head-of-it-reject,Both Service Form Module Requests Head Of It Reject,API User,Yes,Active
+77,Both-service-form,POST,/api/both-service-form/module-requests/{userAccessId}/hod-approve,Both Service Form Module Requests Hod Approve,API User,Yes,Active
+78,Both-service-form,POST,/api/both-service-form/module-requests/{userAccessId}/ict-director-approve,Both Service Form Module Requests Ict Director Approve,API User,Yes,Active
+79,Both-service-form,POST,/api/both-service-form/module-requests/{userAccessId}/ict-director-reject,Both Service Form Module Requests Ict Director Reject,API User,Yes,Active
+80,Both-service-form,POST,/api/both-service-form/module-requests/{userAccessId}/ict-officer-approve,Both Service Form Module Requests Ict Officer Approve,API User,Yes,Active
+81,Both-service-form,GET,/api/both-service-form/table/data,Both Service Form Table Data,API User,No,Active
+82,Both-service-form,GET,/api/both-service-form/user-access/{userAccessId}/personal-info,Both Service Form Personal Info,API User,Yes,Active
+83,Both-service-form,GET,/api/both-service-form/user/info,Both Service Form User Info,API User,Yes,Active
+84,Both-service-form,GET,/api/both-service-form/{id},Both Service Form Show,API User,No,Active
+85,Both-service-form,PUT,/api/both-service-form/{id},Both Service Form Update,API User,No,Active
+86,Both-service-form,POST,/api/both-service-form/{id}/approve/dict,Both Service Form Approve Dict,API User,No,Active
+87,Both-service-form,POST,/api/both-service-form/{id}/approve/divisional-director,Both Service Form Approve Divisional Director,API User,No,Active
+88,Both-service-form,POST,/api/both-service-form/{id}/approve/hod,Both Service Form Approve Hod,API User,No,Active
+89,Both-service-form,POST,/api/both-service-form/{id}/approve/hod-it,Both Service Form Approve Hod It,API User,No,Active
+90,Both-service-form,POST,/api/both-service-form/{id}/approve/ict-officer,Both Service Form Approve Ict Officer,API User,No,Active
+91,Both-service-form,GET,/api/both-service-form/{id}/export-pdf,Both Service Form Export Pdf,API User,No,Active
+92,Both-service-form,POST,/api/both-service-form/{id}/hod-submit,Both Service Form Hod Submit,API User,No,Active
+93,Both-service-form,GET,/api/both-service-form/{id}/hod-view,Both Service Form Hod View,API User,No,Active
+94,Both-service-form,POST,/api/both-service-form/{id}/update,Both Service Form Update Multipart,API User,No,Active
+95,Both-service-form,POST,/api/both-service-form/{id}/update-hod-approval,Both Service Form Update Hod Approval,API User,No,Active
+96,Change-password,POST,/api/change-password,Password Change,API User,No,Active
+97,Current-user,GET,/api/current-user,Current User,API User,Yes,Active
+98,Declaration,GET,/api/declaration/all,Declaration Index,API User,No,Active
+99,Declaration,POST,/api/declaration/check-pf-number,Declaration Check Pf Number,API User,No,Active
+100,Declaration,GET,/api/declaration/departments,Declaration Departments,API User,No,Active
+101,Declaration,GET,/api/declaration/show,Declaration Show,API User,No,Active
+102,Declaration,POST,/api/declaration/submit,Declaration Submit,API User,No,Active
+103,Department-hod,GET,/api/department-hod,Department Hod Index,API User,No,Active
+104,Department-hod,GET,/api/department-hod/eligible-hods,Department Hod Eligible,API User,No,Active
+105,Department-hod,GET,/api/department-hod/statistics,Department Hod Statistics,API User,No,Active
+106,Department-hod,POST,/api/department-hod/{department}/assign,Department Hod Assign,API User,No,Active
+107,Department-hod,DELETE,/api/department-hod/{department}/delete,Department Hod Delete,API User,No,Active
+108,Department-hod,GET,/api/department-hod/{department}/details,Department Hod Details,API User,No,Active
+109,Department-hod,DELETE,/api/department-hod/{department}/remove,Department Hod Remove,API User,No,Active
+110,Department-hod,PUT,/api/department-hod/{department}/update,Department Hod Update,API User,No,Active
+111,Device-inventory,GET,/api/device-inventory,Device Inventory Index,API User,No,Active
+112,Device-inventory,POST,/api/device-inventory,Device Inventory Store,API User,No,Active
+113,Device-inventory,GET,/api/device-inventory/available,Device Inventory Available,API User,No,Active
+114,Device-inventory,POST,/api/device-inventory/fix-quantities,Device Inventory Fix Quantities,API User,No,Active
+115,Device-inventory,GET,/api/device-inventory/statistics,Device Inventory Statistics,API User,No,Active
+116,Device-inventory,GET,/api/device-inventory/{deviceInventory},Device Inventory Show,API User,No,Active
+117,Device-inventory,PUT,/api/device-inventory/{deviceInventory},Device Inventory Update,API User,No,Active
+118,Device-inventory,DELETE,/api/device-inventory/{deviceInventory},Device Inventory Destroy,API User,No,Active
+119,Divisional,GET,/api/divisional/combined-access-requests,Divisional Combined Access Requests Index,API User,No,Active
+120,Divisional,GET,/api/divisional/combined-access-requests/statistics,Divisional Combined Access Requests Statistics,API User,No,Active
+121,Divisional,GET,/api/divisional/combined-access-requests/{id},Divisional Combined Access Requests Show,API User,No,Active
+122,Divisional,POST,/api/divisional/combined-access-requests/{id}/approve,Divisional Combined Access Requests Approve,API User,No,Active
+123,Divisional,POST,/api/divisional/combined-access-requests/{id}/cancel,Divisional Combined Access Requests Cancel,API User,No,Active
+124,Divisional,GET,/api/divisional/combined-access-requests/{id}/timeline,Divisional Combined Access Requests Timeline,API User,No,Active
+125,Divisional,GET,/api/divisional/ict-director-recommendations,Divisional Ict Director Recommendations List,API User,No,Active
+126,Divisional,GET,/api/divisional/ict-director-recommendations/stats,Divisional Ict Director Recommendations Stats,API User,No,Active
+127,Divisional,GET,/api/divisional/ict-director-recommendations/{userAccessId}/details,Divisional Ict Director Recommendations Details,API User,Yes,Active
+128,Divisional,POST,/api/divisional/ict-director-recommendations/{userAccessId}/respond,Divisional Ict Director Recommendations Respond,API User,Yes,Active
+129,Docs.json,GET,/api/docs.json,Api Docs Json,API User,No,Active
+130,Documentation,GET,/api/documentation,Api Documentation,API User,No,Active
+131,Documents,POST,/api/documents/sign,Generated::Oe2F39Fovokoxka8,API User,No,Active
+132,Documents,GET,/api/documents/{id}/signatures,Generated::9X0Rjfvwgwkfnxfz,API User,No,Active
+133,Head-of-it,GET,/api/head-of-it/all-requests,Head Of It All Requests,API User,No,Active
+134,Head-of-it,POST,/api/head-of-it/assign-ict-task,Head Of It Assign Ict Task,API User,No,Active
+135,Head-of-it,POST,/api/head-of-it/assign-task,Head Of It Assign Task,API User,No,Active
+136,Head-of-it,GET,/api/head-of-it/available-ict-officers,Head Of It Available Ict Officers,API User,No,Active
+137,Head-of-it,GET,/api/head-of-it/ict-director-recommendations,Head Of It Ict Director Recommendations List,API User,No,Active
+138,Head-of-it,GET,/api/head-of-it/ict-director-recommendations/stats,Head Of It Ict Director Recommendations Stats,API User,No,Active
+139,Head-of-it,GET,/api/head-of-it/ict-director-recommendations/{userAccessId}/details,Head Of It Ict Director Recommendations Details,API User,Yes,Active
+140,Head-of-it,GET,/api/head-of-it/ict-officers,Head Of It Ict Officers,API User,No,Active
+141,Head-of-it,GET,/api/head-of-it/ict-pending-requests,Head Of It Ict Pending Requests,API User,No,Active
+142,Head-of-it,POST,/api/head-of-it/ict-tasks/{userAccessId}/cancel,Head Of It Cancel Ict Task,API User,Yes,Active
+143,Head-of-it,GET,/api/head-of-it/ict-tasks/{userAccessId}/history,Head Of It Ict Task History,API User,Yes,Active
+144,Head-of-it,GET,/api/head-of-it/pending-requests,Head Of It Pending Requests,API User,No,Active
+145,Head-of-it,GET,/api/head-of-it/requests/{id},Head Of It Request Details,API User,No,Active
+146,Head-of-it,POST,/api/head-of-it/requests/{id}/approve,Head Of It Approve Request,API User,No,Active
+147,Head-of-it,POST,/api/head-of-it/requests/{id}/reject,Head Of It Reject Request,API User,No,Active
+148,Head-of-it,GET,/api/head-of-it/requests/{id}/timeline,Head Of It Request Timeline,API User,No,Active
+149,Head-of-it,POST,/api/head-of-it/tasks/{requestId}/cancel,Head Of It Cancel Task,API User,No,Active
+150,Head-of-it,GET,/api/head-of-it/tasks/{requestId}/history,Head Of It Task History,API User,No,Active
+151,Health,GET,/api/health,Generated::E6Hky683Fhmnrmkx,API User,No,Active
+152,Health,GET,/api/health/detailed,Generated::2Ayesv4Qmsmgkdxo,API User,No,Active
+153,Hod,GET,/api/hod/combined-access-requests,Hod Combined Access Requests Index,API User,No,Active
+154,Hod,GET,/api/hod/combined-access-requests/statistics,Hod Combined Access Requests Statistics,API User,No,Active
+155,Hod,GET,/api/hod/combined-access-requests/{id},Hod Combined Access Requests Show,API User,No,Active
+156,Hod,DELETE,/api/hod/combined-access-requests/{id},Hod Combined Access Requests Delete,API User,No,Active
+157,Hod,POST,/api/hod/combined-access-requests/{id}/approve,Hod Combined Access Requests Approve,API User,No,Active
+158,Hod,POST,/api/hod/combined-access-requests/{id}/cancel,Hod Combined Access Requests Cancel,API User,No,Active
+159,Hod,GET,/api/hod/combined-access-requests/{id}/timeline,Hod Combined Access Requests Timeline,API User,No,Active
+160,Hod,GET,/api/hod/divisional-recommendations,Hod Divisional Recommendations List,API User,No,Active
+161,Hod,GET,/api/hod/divisional-recommendations/stats,Hod Divisional Recommendations Stats,API User,No,Active
+162,Hod,GET,/api/hod/divisional-recommendations/{userAccessId}/details,Hod Divisional Recommendations Details,API User,Yes,Active
+163,Hod,POST,/api/hod/divisional-recommendations/{userAccessId}/resubmit,Hod Divisional Recommendations Resubmit,API User,Yes,Active
+164,Hod,POST,/api/hod/users,Hod Users Store,API User,Yes,Active
+165,Ict-approval,GET,/api/ict-approval/device-requests,Ict Approval Device Requests,API User,No,Active
+166,Ict-approval,POST,/api/ict-approval/device-requests/bulk-delete,Ict Approval Bulk Delete,API User,No,Active
+167,Ict-approval,GET,/api/ict-approval/device-requests/statistics,Ict Approval Statistics,API User,No,Active
+168,Ict-approval,POST,/api/ict-approval/device-requests/{bookingId}/link-user,Ict Approval Link User,API User,Yes,Active
+169,Ict-approval,GET,/api/ict-approval/device-requests/{requestId},Ict Approval Device Request Details,API User,No,Active
+170,Ict-approval,DELETE,/api/ict-approval/device-requests/{requestId},Ict Approval Delete,API User,No,Active
+171,Ict-approval,POST,/api/ict-approval/device-requests/{requestId}/approve,Ict Approval Approve,API User,No,Active
+172,Ict-approval,POST,/api/ict-approval/device-requests/{requestId}/assessment/issuing,Ict Approval Assessment Issuing,API User,No,Active
+173,Ict-approval,POST,/api/ict-approval/device-requests/{requestId}/assessment/receiving,Ict Approval Assessment Receiving,API User,No,Active
+174,Ict-approval,POST,/api/ict-approval/device-requests/{requestId}/reject,Ict Approval Reject,API User,No,Active
+175,Ict-director,GET,/api/ict-director/combined-access-requests,Ict Director Combined Access Requests Index,API User,No,Active
+176,Ict-director,GET,/api/ict-director/combined-access-requests/statistics,Ict Director Combined Access Requests Statistics,API User,No,Active
+177,Ict-director,GET,/api/ict-director/combined-access-requests/{id},Ict Director Combined Access Requests Show,API User,No,Active
+178,Ict-director,POST,/api/ict-director/combined-access-requests/{id}/approve,Ict Director Combined Access Requests Approve,API User,No,Active
+179,Ict-director,POST,/api/ict-director/combined-access-requests/{id}/cancel,Ict Director Combined Access Requests Cancel,API User,No,Active
+180,Ict-director,GET,/api/ict-director/combined-access-requests/{id}/timeline,Ict Director Combined Access Requests Timeline,API User,No,Active
+181,Ict-officer,GET,/api/ict-officer/access-requests,Ict Officer Access Requests,API User,No,Active
+182,Ict-officer,GET,/api/ict-officer/access-requests/{requestId},Ict Officer Access Request Details,API User,No,Active
+183,Ict-officer,POST,/api/ict-officer/access-requests/{requestId}/assign,Ict Officer Assign Access Request,API User,No,Active
+184,Ict-officer,POST,/api/ict-officer/access-requests/{requestId}/cancel,Ict Officer Cancel Access Request,API User,No,Active
+185,Ict-officer,POST,/api/ict-officer/access-requests/{requestId}/complete,Ict Officer Complete Access Request,API User,No,Active
+186,Ict-officer,POST,/api/ict-officer/access-requests/{requestId}/grant-access,Ict Officer Grant Access,API User,No,Active
+187,Ict-officer,PUT,/api/ict-officer/access-requests/{requestId}/progress,Ict Officer Update Access Request Progress,API User,No,Active
+188,Ict-officer,GET,/api/ict-officer/access-requests/{requestId}/timeline,Ict Officer Access Request Timeline,API User,No,Active
+189,Ict-officer,GET,/api/ict-officer/dashboard,Ict Officer Dashboard,API User,No,Active
+190,Ict-officer,GET,/api/ict-officer/pending-count,Ict Officer Pending Count,API User,No,Active
+191,Ict-officer,GET,/api/ict-officer/statistics,Ict Officer Statistics,API User,No,Active
+192,Ict-officer,GET,/api/ict-officer/tasks,Ict Officer Tasks,API User,No,Active
+193,Ict-officer,GET,/api/ict-officer/tasks/{assignmentId},Ict Officer Task Details,API User,No,Active
+194,Ict-officer,POST,/api/ict-officer/tasks/{assignmentId}/complete,Ict Officer Complete Task,API User,No,Active
+195,Ict-officer,POST,/api/ict-officer/tasks/{assignmentId}/progress,Ict Officer Update Progress,API User,No,Active
+196,Ict-officer,POST,/api/ict-officer/tasks/{assignmentId}/start,Ict Officer Start Task,API User,No,Active
+197,Implementation-workflow,POST,/api/implementation-workflow,Implementation Workflow Store,API User,No,Active
+198,Implementation-workflow,GET,/api/implementation-workflow/{userAccessId},Implementation Workflow Show,API User,Yes,Active
+199,Implementation-workflow,PUT,/api/implementation-workflow/{userAccessId},Implementation Workflow Update,API User,Yes,Active
+200,Internet-users,GET,/api/internet-users,Admin Internet Users,API User,Yes,Active
+201,Jeeva-modules,GET,/api/jeeva-modules,Jeeva Modules Index,API User,No,Active
+202,Jeeva-users,GET,/api/jeeva-users,Admin Jeeva Users,API User,Yes,Active
+203,Login,POST,/api/login,Login,API User,No,Active
+204,Logout,POST,/api/logout,Logout,API User,No,Active
+205,Logout-all,POST,/api/logout-all,Logout All,API User,No,Active
+206,Module-access-approval,GET,/api/module-access-approval/{id},Module Access Approval Get,API User,No,Active
+207,Module-access-approval,POST,/api/module-access-approval/{id}/process,Module Access Approval Process,API User,No,Active
+208,Module-requests,POST,/api/module-requests,Module Requests Store,API User,No,Active
+209,Module-requests,POST,/api/module-requests/jeeva,Module Requests Jeeva Store,API User,No,Active
+210,Module-requests,GET,/api/module-requests/jeeva/modules,Module Requests Jeeva Modules,API User,No,Active
+211,Module-requests,GET,/api/module-requests/jeeva/{userAccessId},Module Requests Jeeva Show,API User,Yes,Active
+212,Module-requests,PUT,/api/module-requests/jeeva/{userAccessId},Module Requests Jeeva Update,API User,Yes,Active
+213,Module-requests,GET,/api/module-requests/modules,Module Requests Modules,API User,No,Active
+214,Module-requests,GET,/api/module-requests/{userAccessId},Module Requests Show,API User,Yes,Active
+215,Module-requests,PUT,/api/module-requests/{userAccessId},Module Requests Update,API User,Yes,Active
+216,Notifications,GET,/api/notifications,Notifications Index,API User,No,Active
+217,Notifications,GET,/api/notifications/breakdown,Notifications Breakdown,API User,No,Active
+218,Notifications,PATCH,/api/notifications/mark-all-read,Notifications Mark All Read,API User,No,Active
+219,Notifications,GET,/api/notifications/pending-count,Notifications Pending Count,API User,No,Active
+220,Notifications,GET,/api/notifications/unread-count,Notifications Unread Count,API User,No,Active
+221,Notifications,DELETE,/api/notifications/{id},Notifications Destroy,API User,No,Active
+222,Notifications,PATCH,/api/notifications/{id}/mark-read,Notifications Mark Read,API User,No,Active
+223,Oauth2-callback,GET,/api/oauth2-callback,L5 Swagger Default Oauth2_Callback,Authenticated,No,Active
+224,Onboarding,POST,/api/onboarding/accept-ict-policy,Onboarding Accept Ict Policy,API User,No,Active
+225,Onboarding,POST,/api/onboarding/accept-terms,Onboarding Accept Terms,API User,No,Active
+226,Onboarding,POST,/api/onboarding/complete,Onboarding Complete,API User,No,Active
+227,Onboarding,POST,/api/onboarding/reset,Onboarding Reset,API User,No,Active
+228,Onboarding,GET,/api/onboarding/status,Onboarding Status,API User,No,Active
+229,Onboarding,POST,/api/onboarding/submit-declaration,Onboarding Submit Declaration,API User,No,Active
+230,Onboarding,POST,/api/onboarding/update-step,Onboarding Update Step,API User,No,Active
+231,Password-reset,POST,/api/password-reset/request-by-phone,Password Reset Request By Phone,API User,Yes,Active
+232,Password-reset,POST,/api/password-reset/reset-with-otp,Password Reset Reset With Otp,API User,No,Active
+233,Password-reset,POST,/api/password-reset/verify-otp,Password Reset Verify Otp,API User,No,Active
+234,Postman-collection,GET,/api/postman-collection,Api Postman Collection,API User,No,Active
+235,Profile,POST,/api/profile/avatar,Profile Avatar,API User,Yes,Active
+236,Profile,POST,/api/profile/check-pf,Profile Check Pf,API User,Yes,Active
+237,Profile,GET,/api/profile/current,Profile Current,API User,Yes,Active
+238,Profile,PUT,/api/profile/current,Profile Update,API User,Yes,Active
+239,Profile,GET,/api/profile/departments,Profile Departments,API User,Yes,Active
+240,Profile,POST,/api/profile/lookup-pf,Profile Lookup Pf,API User,Yes,Active
+241,Register,POST,/api/register,Register,API User,No,Active
+242,Request-status,GET,/api/request-status,Request Status Index,API User,No,Active
+243,Request-status,GET,/api/request-status/details,Request Status Show,API User,No,Active
+244,Request-status,GET,/api/request-status/statistics,Request Status Statistics,API User,No,Active
+245,Request-status,GET,/api/request-status/statuses,Request Status Statuses,API User,No,Active
+246,Request-status,GET,/api/request-status/types,Request Status Types,API User,No,Active
+247,Role-redirect,GET,/api/role-redirect,Role Redirect,API User,No,Active
+248,Sessions,GET,/api/sessions,Sessions,API User,No,Active
+249,Sessions,POST,/api/sessions/revoke,Sessions Revoke,API User,No,Active
+250,Signatures,GET,/api/signatures/{signature}/verify,Generated::T4Sagmjwb1Twzgry,API User,No,Active
+251,Sms,GET|POST,/api/sms/delivery-report,Generated::I340Ojfisabnu7Ty,API User,No,Active
+252,User,GET,/api/user,Generated::Kzhnmjhvz3694Vfc,API User,Yes,Active
+253,User-access-workflow,GET,/api/user-access-workflow,User Access Workflow Index,API User,Yes,Active
+254,User-access-workflow,POST,/api/user-access-workflow,User Access Workflow Store,API User,Yes,Active
+255,User-access-workflow,POST,/api/user-access-workflow/export/requests,User Access Workflow Export,API User,Yes,Active
+256,User-access-workflow,GET,/api/user-access-workflow/options/form-data,User Access Workflow Form Options,API User,Yes,Active
+257,User-access-workflow,GET,/api/user-access-workflow/statistics/dashboard,User Access Workflow Statistics,API User,Yes,Active
+258,User-access-workflow,GET,/api/user-access-workflow/{userAccess},User Access Workflow Show,API User,Yes,Active
+259,User-access-workflow,PUT,/api/user-access-workflow/{userAccess},User Access Workflow Update,API User,Yes,Active
+260,User-access-workflow,POST,/api/user-access-workflow/{userAccess}/approve/divisional,User Access Workflow Approve Divisional,API User,Yes,Active
+261,User-access-workflow,POST,/api/user-access-workflow/{userAccess}/approve/head-it,User Access Workflow Approve Head It,API User,Yes,Active
+262,User-access-workflow,POST,/api/user-access-workflow/{userAccess}/approve/hod,User Access Workflow Approve Hod,API User,Yes,Active
+263,User-access-workflow,POST,/api/user-access-workflow/{userAccess}/approve/ict-director,User Access Workflow Approve Ict Director,API User,Yes,Active
+264,User-access-workflow,POST,/api/user-access-workflow/{userAccess}/cancel,User Access Workflow Cancel,API User,Yes,Active
+265,User-access-workflow,POST,/api/user-access-workflow/{userAccess}/implement/ict-officer,User Access Workflow Implement Ict Officer,API User,Yes,Active
+266,User-roles,GET,/api/user-roles,User Roles Index,API User,Yes,Active
+267,User-roles,GET,/api/user-roles/statistics,User Roles Statistics,API User,Yes,Active
+268,User-roles,POST,/api/user-roles/{user}/assign,User Roles Assign,API User,Yes,Active
+269,User-roles,GET,/api/user-roles/{user}/history,User Roles History,API User,Yes,Active
+270,User-roles,DELETE,/api/user-roles/{user}/roles/{role},User Roles Remove,API User,Yes,Active
+271,User,GET,/api/user/dashboard-stats,User Dashboard Stats,API User,Yes,Active
+272,User,GET,/api/user/recent-activity,User Recent Activity,API User,Yes,Active
+273,User,GET,/api/user/request-status-breakdown,User Request Status Breakdown,API User,Yes,Active
+274,V1,POST,/api/v1/check-signature,Generated::Givd5Ftvp7Iommfd,API User,No,Active
+275,V1,POST,/api/v1/combined-access,Combined Access Store,API User,No,Active
+276,V1,GET,/api/v1/departments,Generated::Qbegyppy8Zq8Jpky,API User,No,Active
+277,V1,GET,/api/v1/user-access,User Access Index,API User,Yes,Active
+278,V1,POST,/api/v1/user-access,User Access Store,API User,Yes,Active
+279,V1,GET,/api/v1/user-access/pending-status,Generated::Zfn9Vt7Ji8Ges5Ae,API User,Yes,Active
+280,V1,POST,/api/v1/user-access/{userAccess},User Access Update Multipart,API User,Yes,Active
+281,V1,GET,/api/v1/user-access/{user_access},User Access Show,API User,Yes,Active
+282,V1,PUT|PATCH,/api/v1/user-access/{user_access},User Access Update,API User,Yes,Active
+283,V1,DELETE,/api/v1/user-access/{user_access},User Access Destroy,API User,Yes,Active
+284,Wellsoft-modules,GET,/api/wellsoft-modules,Wellsoft Modules Index,API User,No,Active
+285,Wellsoft-users,GET,/api/wellsoft-users,Admin Wellsoft Users,API User,Yes,Active

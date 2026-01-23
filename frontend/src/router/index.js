@@ -47,6 +47,18 @@ const routes = [
       isPublic: true
     }
   },
+  {
+    path: '/api-docs',
+    name: 'ApiDocsRedirect',
+    // Simple SPA route that redirects to the backend modern API docs UI
+    beforeEnter: () => {
+      window.location.href = '/api-docs-modern'
+    },
+    meta: {
+      requiresAuth: false,
+      isPublic: true
+    }
+  },
 
   // Dashboard routes
   {

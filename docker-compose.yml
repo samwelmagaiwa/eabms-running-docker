@@ -1,0 +1,11 @@
+services:
+  backend:
+    image: ghcr.io/samwelmagaiwa/eabms-backend:latest
+    container_name: eabms_backend
+    restart: unless-stopped
+
+    env_file:
+      - ./backend/.env.docker.prod
+
+    ports:
+      - "127.0.0.1:9000:9000"
