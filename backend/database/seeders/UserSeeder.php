@@ -139,16 +139,6 @@ class UserSeeder extends Seeder
             
             // Nursing Department Users
             [
-                'name' => 'Chief Nursing Officer',
-                'email' => 'cno@mnh.go.tz',
-                'phone' => '+255700000007',
-                'pf_number' => 'PF7890',
-                'department_id' => $departments['NURS']?->id,
-                'password' => Hash::make('12345678'),
-                'is_active' => true,
-                'roles' => ['head_of_department']
-            ],
-            [
                 'name' => 'Senior Nurse',
                 'email' => 'senior.nurse@mnh.go.tz',
                 'phone' => '+255700000008',

@@ -620,6 +620,7 @@
   import SimpleLoadingBanner from '../../common/SimpleLoadingBanner.vue'
   import OrbitingDots from '../../common/OrbitingDots.vue'
   import signatureService from '@/services/signatureService'
+  import { APP_CONFIG } from '@/utils/config'
 
   // Constants for better maintainability
   const FORM_CONSTANTS = {
@@ -797,7 +798,7 @@
        * Handle loading banner completion
        */
       onLoadingComplete() {
-        console.log('🎉 Loading banner animation completed')
+        if (APP_CONFIG.DEBUG) console.log('🎉 Loading banner animation completed')
         // Loading banner has finished its fade-out animation
       },
 
@@ -818,7 +819,7 @@
        * Auto-populate user data from the authenticated user's profile
        */
       async autoPopulateUserData() {
-        console.log('🔄 Starting declaration form auto-population...')
+        if (APP_CONFIG.DEBUG) console.log('🔄 Starting declaration form auto-population...')
         this.isLoadingProfile = true
         this.profileLoadError = null
 
@@ -831,7 +832,8 @@
           return
         }
 
-        console.log('✅ Authentication token found, proceeding with profile fetch')
+        if (APP_CONFIG.DEBUG)
+          console.log('✅ Authentication token found, proceeding with profile fetch')
 
         try {
           const result = await userProfileService.getFormAutoPopulationData()
@@ -1132,18 +1134,19 @@
             }
           })
 
-          // Log the form data for debugging
-          console.log('Form data being sent:', {
-            ...declarationData,
-            hasDigitalSignature: this.hasUserSigned
-          })
+          if (APP_CONFIG.DEBUG) {
+            console.log('Form data being sent:', {
+              ...declarationData,
+              hasDigitalSignature: this.hasUserSigned
+            })
+          }
 
           // Import API client and submit
           const { authAPI } = await import('../../../utils/apiClient')
           const result = await authAPI.submitDeclaration(formData)
 
           if (result.success) {
-            console.log('Declaration submitted successfully:', result.data)
+            if (APP_CONFIG.DEBUG) console.log('Declaration submitted successfully:', result.data)
             this.showNotification('Declaration submitted successfully!', 'success')
 
             // Emit event to parent component with the declaration data

@@ -72,7 +72,15 @@ class SendSmsNotification implements ShouldQueue
                 'reference' => $reference,
                 'reason' => null
             ]);
-            $this->sms->sendSms($event->user->phone, $message, 'approval');
+            $result = $this->sms->sendSms($event->user->phone, $message, 'approval');
+            
+            // Update requester SMS status
+            if (method_exists($event->request, 'update')) {
+                $event->request->update([
+                    'sms_sent_to_requester_at' => $result['success'] ? now() : null,
+                    'sms_to_requester_status' => $result['success'] ? 'sent' : 'failed'
+                ]);
+            }
         } else {
             Log::warning('Requester has no phone number for submission SMS', [
                 'user_id' => $event->user->id ?? null
@@ -87,7 +95,17 @@ class SendSmsNotification implements ShouldQueue
                 $event->user->department->name ?? ($event->request->department->name ?? 'N/A'),
                 $reference
             );
-            $this->sms->sendBulkSms($event->approvers, $approverMessage, 'approval_notification');
+            $results = $this->sms->sendBulkSms($event->approvers, $approverMessage, 'approval_notification');
+            
+            // Update HOD/Approver SMS status for the request record
+            // For initial submission, we track this in the sms_to_hod_status column
+            if (method_exists($event->request, 'update')) {
+                $status = ($results['sent'] > 0) ? 'sent' : 'failed';
+                $event->request->update([
+                    'sms_sent_to_hod_at' => ($results['sent'] > 0) ? now() : null,
+                    'sms_to_hod_status' => $status
+                ]);
+            }
         }
     }
 

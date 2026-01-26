@@ -48,7 +48,9 @@ RUN --mount=type=cache,target=/var/cache/apk \
     freetype \
     libjpeg-turbo \
     icu-libs \
-    oniguruma
+    oniguruma \
+    libavif \
+    libwebp
 
 WORKDIR /var/www
 

@@ -12,13 +12,13 @@ export const API_CONFIG = {
     !process.env.VUE_APP_API_URL ||
     process.env.VUE_APP_API_URL.startsWith('/') ||
     process.env.VUE_APP_API_URL === ''
-      ? 'http://127.0.0.1:8000/api'
+      ? 'http://localhost/api'
       : process.env.VUE_APP_API_URL,
   TIMEOUT: parseInt(process.env.VUE_APP_API_TIMEOUT) || 10000
 }
 
 // Debug log to verify what's actually being used
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && process.env.VUE_APP_DEBUG === 'true') {
   console.log('🔧 API Config Loaded:', {
     rawEnvVar: process.env.VUE_APP_API_URL,
     resolvedBaseURL: API_CONFIG.BASE_URL

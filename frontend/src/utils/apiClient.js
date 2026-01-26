@@ -26,7 +26,9 @@ const apiClient = axios.create({
   }
 })
 
-console.log('🚀 Axios Instance Created with BaseURL:', API_CONFIG.BASE_URL)
+if (typeof window !== 'undefined' && APP_CONFIG.DEBUG) {
+  console.log('🚀 Axios Instance Created with BaseURL:', API_CONFIG.BASE_URL)
+}
 
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
@@ -38,10 +40,7 @@ apiClient.interceptors.request.use(
 
     // Log request in debug mode
     if (typeof window !== 'undefined' && APP_CONFIG.DEBUG) {
-      console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`, {
-        headers: config.headers,
-        data: config.data
-      })
+      console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`)
     }
 
     return config
@@ -60,11 +59,7 @@ apiClient.interceptors.response.use(
     // Log response in debug mode
     if (typeof window !== 'undefined' && APP_CONFIG.DEBUG) {
       console.log(
-        `✅ API Response: ${response.config.method?.toUpperCase()} ${response.config.url}`,
-        {
-          status: response.status,
-          data: response.data
-        }
+        `✅ API Response: ${response.config.method?.toUpperCase()} ${response.config.url} (${response.status})`
       )
     }
 
