@@ -1,5 +1,5 @@
 # Stage 1: Build stage
-FROM php:8.2-fpm-alpine as builder
+FROM php:8.2-fpm-alpine AS builder
 
 # Install the PHP extension installer
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
