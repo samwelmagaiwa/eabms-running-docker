@@ -50,7 +50,8 @@ RUN --mount=type=cache,target=/var/cache/apk \
     icu-libs \
     oniguruma \
     libavif \
-    libwebp
+    libwebp \
+    libxpm
 
 WORKDIR /var/www
 
