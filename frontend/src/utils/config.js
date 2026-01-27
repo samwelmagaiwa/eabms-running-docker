@@ -6,14 +6,8 @@
 // API Configuration
 // API Configuration
 export const API_CONFIG = {
-  // Force localhost:8000 if VUE_APP_API_URL is missing, empty, or relative (starts with /)
-  // This ensures we don't accidentally use relative paths in development
-  BASE_URL:
-    !process.env.VUE_APP_API_URL ||
-    process.env.VUE_APP_API_URL.startsWith('/') ||
-    process.env.VUE_APP_API_URL === ''
-      ? 'http://localhost/api'
-      : process.env.VUE_APP_API_URL,
+  // Use VUE_APP_API_URL from environment, fallback to relative /api for production
+  BASE_URL: process.env.VUE_APP_API_URL || '/api',
   TIMEOUT: parseInt(process.env.VUE_APP_API_TIMEOUT) || 10000
 }
 
