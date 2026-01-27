@@ -1,0 +1,25 @@
+{
+  "name": "Muhimbili National Hospital - Access Request System",
+  "short_name": "MNH Access System",
+  "description": "Access Request and Management System for Muhimbili National Hospital",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1e3a8a",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "assets/images/logo2.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/images/logo2.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "orientation": "portrait-primary",
+  "categories": ["healthcare", "productivity", "business"]
+}

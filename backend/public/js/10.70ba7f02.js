@@ -1,0 +1,1 @@
+"use strict";(self["webpackChunkfrontend"]=self["webpackChunkfrontend"]||[]).push([[10],{10:function(n,e,f){f.r(e)}}]);

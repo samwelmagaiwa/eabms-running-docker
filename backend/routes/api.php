@@ -49,7 +49,7 @@ Route::get('/', function () {
         'instructions' => [
             'visit_docs' => 'Go to /api-docs-modern for comprehensive API documentation with all 265+ endpoints',
             'download_postman' => 'Download Postman collection from /api/postman-collection',
-            'json_schema' => 'Access raw OpenAPI JSON from /api/api-docs'
+            'json_schema' => 'Access raw OpenAPI JSON from /api/docs'
         ]
     ]);
 });

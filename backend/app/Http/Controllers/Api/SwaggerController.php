@@ -14,7 +14,6 @@ class SwaggerController extends Controller
      */
     public function documentation(Request $request)
     {
-        // Always use our custom implementation since l5-swagger package isn't installed
         return $this->generateBasicSwaggerUI();
     }
 
@@ -30,6 +29,59 @@ class SwaggerController extends Controller
             'api_docs_url' => url('/api/api-docs'),
             'postman_collection_url' => url('/api/postman-collection')
         ]);
+    }
+
+    /**
+     * Serve custom assets for swagger theme.
+     *
+     * @param Request $request
+     * @param string $asset
+     * @return \Illuminate\Http\Response
+     */
+    public function asset(Request $request, string $asset)
+    {
+        $customAssetsPath = public_path('swagger-assets');
+        $filePath = $customAssetsPath . '/' . $asset;
+        
+        // Check if custom asset exists
+        if (File::exists($filePath)) {
+            $mimeType = $this->getAssetMimeType($asset);
+            $content = File::get($filePath);
+            
+            return response($content)
+                ->header('Content-Type', $mimeType)
+                ->header('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+        }
+
+        abort(404, 'Asset not found');
+    }
+
+    /**
+     * Get MIME type for asset files.
+     *
+     * @param string $filename
+     * @return string
+     */
+    private function getAssetMimeType(string $filename): string
+    {
+        $extension = pathinfo($filename, PATHINFO_EXTENSION);
+        
+        $mimeTypes = [
+            'css' => 'text/css',
+            'js' => 'application/javascript',
+            'json' => 'application/json',
+            'png' => 'image/png',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'gif' => 'image/gif',
+            'svg' => 'image/svg+xml',
+            'woff' => 'font/woff',
+            'woff2' => 'font/woff2',
+            'ttf' => 'font/ttf',
+            'eot' => 'application/vnd.ms-fontobject',
+        ];
+
+        return $mimeTypes[$extension] ?? 'text/plain';
     }
 
     /**
@@ -2383,12 +2435,19 @@ class SwaggerController extends Controller
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Access Management API - Swagger UI</title>
-    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui.css" />
+    <title>MNH API Documentation - Complete (265+ Endpoints)</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Swagger UI CSS -->
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css" />
+    
     <style>
         html {
             box-sizing: border-box;
-            overflow: -moz-scrollbars-vertical;
             overflow-y: scroll;
         }
         *, *:before, *:after {
@@ -2396,124 +2455,89 @@ class SwaggerController extends Controller
         }
         body {
             margin: 0;
-            background: #fafafa;
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            min-height: 100vh;
         }
-        .swagger-ui .topbar {
-            background-color: #1b1b1b;
-        }
-        .swagger-ui .topbar .download-url-wrapper {
-            display: none;
-        }
-        .custom-header {
+        
+        /* Modern Header */
+        .modern-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 20px;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             text-align: center;
-            margin-bottom: 0;
         }
-        .custom-header h1 {
+        .modern-header h1 {
             margin: 0;
-            font-size: 2em;
-            font-weight: 300;
+            font-size: 2.25rem;
+            font-weight: 700;
         }
-        .custom-header p {
-            margin: 10px 0 0 0;
+        .modern-header p {
+            margin: 0.5rem 0 0 0;
             opacity: 0.9;
+            font-size: 1.1rem;
         }
-        .info-section {
-            background: white;
-            padding: 20px;
-            margin: 0;
-            border-bottom: 1px solid #e8e8e8;
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
         }
-        .info-section h3 {
-            color: #3b4151;
-            margin-top: 0;
-        }
-        .auth-info {
-            background: #f7f7f7;
-            border-left: 4px solid #61affe;
-            padding: 15px;
-            margin: 10px 0;
-        }
-        .endpoints-count {
-            background: #e8f5e8;
-            border-left: 4px solid #4caf50;
-            padding: 10px;
-            margin: 10px 0;
-            font-weight: bold;
-        }
-        .download-section {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 10px;
-            margin: 10px 0;
-        }
+
+        /* Swagger UI Overrides */
+        .swagger-ui .topbar { display: none; }
+        .swagger-ui .info { margin: 20px 0; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .swagger-ui .scheme-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin: 20px 0; }
+        
         .download-btn {
             display: inline-block;
-            padding: 8px 16px;
+            padding: 0.5rem 1rem;
             background: #ff6c37;
             color: white;
             text-decoration: none;
-            border-radius: 4px;
-            margin: 5px 5px 5px 0;
-            font-size: 14px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            margin-right: 0.5rem;
         }
         .download-btn:hover {
             background: #e55a2b;
-            color: white;
-            text-decoration: none;
-        }
-        /* Override Swagger UI styles */
-        .swagger-ui .info {
-            margin: 20px 0;
-        }
-        .swagger-ui .scheme-container {
-            background: #fff;
-            box-shadow: none;
-            border: 1px solid #d3d3d3;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
     </style>
 </head>
 <body>
-    <div class="custom-header">
-        <h1>🚀 User Access Management API</h1>
-        <p>Interactive API Documentation & Testing Interface</p>
-        <p>Version 1.0.0 | Laravel Backend API</p>
+    <div class="modern-header">
+        <div class="container">
+            <h1>🚀 MNH API Documentation</h1>
+            <p>Comprehensive Documentation for 265+ Endpoints</p>
+        </div>
     </div>
     
-    <div class="info-section">
-        <h3>🚀 Getting Started</h3>
-        <p>This is an interactive API documentation where you can test all endpoints directly from your browser.</p>
-        
-        <div class="auth-info">
-            <strong>🔐 Authentication Required:</strong><br>
-            Most endpoints require authentication. Click the "Authorize" button below and enter your Bearer token:<br>
-            <code>Bearer your-access-token-here</code><br><br>
-            <strong>How to get a token:</strong> Use the <code>POST /login</code> endpoint with your credentials.
+    <div class="container">
+        <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <strong>API Server:</strong> <code style="color: #3b82f6;">' . url('/api') . '</code>
+            </div>
+            <div>
+                <a href="' . url('/api/api-docs') . '" target="_blank" class="download-btn">View JSON</a>
+                <a href="' . url('/api/postman-collection') . '" target="_blank" class="download-btn" style="background: #0ea5e9;">Postman Collection</a>
+            </div>
         </div>
         
-        <div class="endpoints-count">
-            📊 Total Endpoints: 50+ endpoints across 16 categories including Authentication, User Access, Device Booking, and Workflow Management
-        </div>
-        
-        <div class="download-section">
-            <strong>📦 Additional Resources:</strong><br>
-            <a href="' . url('/api/postman-collection') . '" class="download-btn" download="user-access-api.postman_collection.json">Download Postman Collection</a>
-            <a href="' . $apiDocsUrl . '" class="download-btn" target="_blank">View Raw OpenAPI JSON</a>
-        </div>
-        
-        <p><strong>Base URL:</strong> <code>' . url('/api') . '</code></p>
+        <div id="swagger-ui"></div>
     </div>
 
-    <div id="swagger-ui"></div>
-
-    <script src="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui-bundle.js"></script>
-    <script src="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui-standalone-preset.js"></script>
+    <!-- Swagger UI Scripts -->
+    <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-standalone-preset.js"></script>
+    
     <script>
         window.onload = function() {
-            // Build Swagger UI
             const ui = SwaggerUIBundle({
                 url: "' . $apiDocsUrl . '",
                 dom_id: "#swagger-ui",
@@ -2525,97 +2549,19 @@ class SwaggerController extends Controller
                 plugins: [
                     SwaggerUIBundle.plugins.DownloadUrl
                 ],
-                layout: "StandaloneLayout",
-                requestInterceptor: (request) => {
-                    // Add custom headers if needed
-                    request.headers["Accept"] = "application/json";
-                    // Add CORS headers for local testing
-                    request.headers["X-Requested-With"] = "XMLHttpRequest";
-                    console.log("Making request to:", request.url);
-                    return request;
-                },
-                responseInterceptor: (response) => {
-                    // Log responses for debugging
-                    console.log("API Response:", {
-                        url: response.url,
-                        status: response.status,
-                        headers: response.headers
-                    });
-                    return response;
-                },
-                onComplete: () => {
-                    console.log("Swagger UI loaded successfully");
-                    
-                    // Hide the default Swagger topbar
-                    setTimeout(() => {
-                        const topbar = document.querySelector(".swagger-ui .topbar");
-                        if (topbar) {
-                            topbar.style.display = "none";
-                        }
-                    }, 1000);
-                },
-                tryItOutEnabled: true,
-                supportedSubmitMethods: ["get", "post", "put", "delete", "patch", "head", "options"],
-                validatorUrl: null, // Disable online validation
-                docExpansion: "list", // Can be "list", "full", or "none"
-                defaultModelsExpandDepth: 1,
-                defaultModelExpandDepth: 1,
-                displayOperationId: false,
+                layout: "BaseLayout",
+                persistAuthorization: true,
                 displayRequestDuration: true,
-                filter: true, // Enable endpoint filtering
-                showExtensions: true,
-                showCommonExtensions: true,
-                persistAuthorization: true, // Keep authorization when page refreshes
-                syntaxHighlight: {
-                    activated: true,
-                    theme: "agate"
-                },
-                requestSnippetsEnabled: true,
-                requestSnippets: {
-                    generators: {
-                        "curl_bash": {
-                            title: "cURL (bash)",
-                            syntax: "bash"
-                        },
-                        "curl_powershell": {
-                            title: "cURL (PowerShell)",
-                            syntax: "powershell"
-                        },
-                        "curl_cmd": {
-                            title: "cURL (CMD)",
-                            syntax: "bash"
-                        }
-                    },
-                    defaultExpanded: false,
-                    languages: ["curl_bash", "curl_powershell", "curl_cmd"]
-                }
+                filter: true,
+                tryItOutEnabled: true
             });
-            
-            // Additional customization
-            setTimeout(() => {
-                // Add custom CSS for better mobile experience
-                const style = document.createElement("style");
-                style.textContent = `
-                    @media (max-width: 768px) {
-                        .swagger-ui .wrapper {
-                            padding: 0 10px;
-                        }
-                        .custom-header {
-                            padding: 15px;
-                        }
-                        .custom-header h1 {
-                            font-size: 1.5em;
-                        }
-                    }
-                `;
-                document.head.appendChild(style);
-            }, 1500);
+            window.ui = ui;
         };
     </script>
 </body>
 </html>';
-
-        return response($html)->header('Content-Type', 'text/html; charset=utf-8');
+        
+        return response($html)->header('Content-Type', 'text/html');
     }
 
     /**

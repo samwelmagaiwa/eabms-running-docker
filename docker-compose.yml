@@ -2,8 +2,7 @@ services:
   backend:
     image: ghcr.io/samwelmagaiwa/eabms-backend:latest
     container_name: eabms_backend
-    ports:
-      - "8000:8000"
+
     environment:
       DB_CONNECTION: mysql
       DB_HOST: 192.168.30.246
