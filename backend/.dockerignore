@@ -1,0 +1,42 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Composer
+vendor/
+vendor.rar
+
+# Laravel
+.env
+.env.example
+.env.*.example
+storage/
+bootstrap/cache/
+tests/
+phpunit.xml
+
+# IDE
+.idea
+.vscode
+.editorconfig
+
+# Logs & Temp
+*.log
+npm-debug.log
+yarn-error.log
+
+# Frontend (if inside backend)
+node_modules/
+public/hot
+public/storage
+
+# Docker
+Dockerfile
+docker-compose.yml
+
+# Other Large/Unnecessary Files
+routes.json
+routes_check.txt
+routes_list.txt
+*.md
