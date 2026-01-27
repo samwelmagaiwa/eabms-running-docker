@@ -293,7 +293,9 @@ class PasswordResetController extends Controller
                         'email' => $user->email,
                         'phone' => $user->phone,
                         'pf_number' => $user->pf_number,
-                        'profile_photo_url' => $user->profile_photo_path ? asset('storage/' . $user->profile_photo_path) : null,
+                        'profile_photo_url' => $user->profile_photo_path 
+                            ? rtrim(config('app.url'), '/') . '/storage/' . $user->profile_photo_path 
+                            : null,
                         'role_id' => null,
                         'role' => $primaryRole,
                         'role_name' => $primaryRole,

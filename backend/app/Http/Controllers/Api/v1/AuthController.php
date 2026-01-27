@@ -208,7 +208,7 @@ class AuthController extends Controller
                 'phone' => $user->phone,
                 'pf_number' => $user->pf_number,
                 'profile_photo_url' => $user->profile_photo_path
-                    ? asset('storage/' . $user->profile_photo_path)
+                    ? rtrim(config('app.url'), '/') . '/storage/' . $user->profile_photo_path
                     : null,
                 // Department information for auto-populating booking forms and other UIs
                 'department_id' => $user->department_id,
@@ -649,7 +649,7 @@ class AuthController extends Controller
                 'phone' => $user->phone,
                 'pf_number' => $user->pf_number,
                 'profile_photo_url' => $user->profile_photo_path
-                    ? asset('storage/' . $user->profile_photo_path)
+                    ? rtrim(config('app.url'), '/') . '/storage/' . $user->profile_photo_path
                     : null,
                 'role_id' => null,
                 'role' => $primaryRole, // Normalized role field
