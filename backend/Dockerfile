@@ -64,6 +64,14 @@ COPY --from=builder /var/www/vendor ./vendor
 COPY --from=builder /usr/local/lib/php/extensions /usr/local/lib/php/extensions
 COPY --from=builder /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
 
+# Create system directories
+RUN mkdir -p /var/www/storage/framework/cache/data \
+    /var/www/storage/framework/sessions \
+    /var/www/storage/framework/views \
+    /var/www/storage/app/public \
+    /var/www/storage/logs \
+    /var/www/bootstrap/cache
+
 # Set permissions
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
