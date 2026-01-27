@@ -222,7 +222,7 @@ class SwaggerController extends Controller
         $apiDoc = array_merge($this->generateApiDocsStructure(), [
             'servers' => [
                 [
-                    'url' => url('/api'),
+                    'url' => rtrim(config('app.url'), '/') . '/api',
                     'description' => 'API Server'
                 ]
             ],
@@ -2521,7 +2521,7 @@ class SwaggerController extends Controller
     <div class="container">
         <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
             <div>
-                <strong>API Server:</strong> <code style="color: #3b82f6;">' . url('/api') . '</code>
+                <strong>API Server:</strong> <code style="color: #3b82f6;">' . rtrim(config('app.url'), '/') . '/api' . '</code>
             </div>
             <div>
                 <a href="' . url('/api/api-docs') . '" target="_blank" class="download-btn">View JSON</a>
