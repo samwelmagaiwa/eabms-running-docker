@@ -2,8 +2,6 @@
   // Resolve images robustly for DomPDF
   $frontRoot = realpath(base_path('../frontend/public/assets/images')) ?: null;
   $backRoot = public_path('assets/images');
-  // Explicit absolute backend public path provided by user (Windows)
-  $explicitBackRoot = realpath('C:\\xampp\\htdocs\\lara-API-vue\\backend\\public\\assets\\images') ?: null;
 
   $leftCandidates = [];
   $rightCandidates = [];
@@ -23,11 +21,6 @@
     foreach ($rightNames as $name) { $rightCandidates[] = $backRoot . DIRECTORY_SEPARATOR . $name; }
   }
 
-  // Explicit absolute path (added as additional fallback)
-  if ($explicitBackRoot) {
-    foreach ($leftNames as $name) { $leftCandidates[] = $explicitBackRoot . DIRECTORY_SEPARATOR . $name; }
-    foreach ($rightNames as $name) { $rightCandidates[] = $explicitBackRoot . DIRECTORY_SEPARATOR . $name; }
-  }
 
   $pickExisting = function(array $paths){
       foreach ($paths as $p) { if ($p && file_exists($p)) return $p; }

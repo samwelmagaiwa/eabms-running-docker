@@ -395,7 +395,7 @@ class UserProfileController extends Controller
             $user->profile_photo_path = $path;
             $user->save();
 
-            $profilePhotoUrl = asset('storage/' . $path);
+            $profilePhotoUrl = rtrim(config('app.url'), '/') . '/storage/' . $path;
 
             Log::info('User avatar updated', [
                 'user_id' => $user->id,
