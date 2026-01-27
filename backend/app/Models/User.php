@@ -33,6 +33,15 @@ class User extends Authenticatable
     ];
 
     /**
+     * The attributes that should be appended to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = [
+        'profile_photo_url',
+    ];
+
+    /**
      * The attributes that should be hidden for serialization.
      *
      * @var list<string>
@@ -323,6 +332,18 @@ class User extends Authenticatable
     public function scopeInDepartment($query, $departmentId)
     {
         return $query->where('department_id', $departmentId);
+    }
+
+    /**
+     * Get the URL for the user's profile photo.
+     *
+     * @return string|null
+     */
+    public function getProfilePhotoUrlAttribute(): ?string
+    {
+        return $this->profile_photo_path
+            ? asset('storage/' . $this->profile_photo_path)
+            : null;
     }
 
     /**

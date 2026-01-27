@@ -85,6 +85,7 @@ class AdminController extends Controller
                     'email' => $user->email,
                     'pf_number' => $user->pf_number,
                     'phone' => $user->phone,
+                    'profile_photo_url' => $user->profile_photo_url,
                     'roles' => $user->roles->map(function ($role) {
                         return [
                             'id' => $role->id,
@@ -186,6 +187,7 @@ class AdminController extends Controller
                 'email' => $user->email,
                 'pf_number' => $user->pf_number,
                 'phone' => $user->phone,
+                'profile_photo_url' => $user->profile_photo_url,
                 'roles' => $user->roles->map(function ($role) {
                     return [
                         'id' => $role->id,

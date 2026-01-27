@@ -110,6 +110,7 @@ class AdminUserController extends Controller
                         'display_name' => $user->department->getFullNameAttribute()
                     ] : null,
                     'is_active' => $user->is_active ?? true,
+                    'profile_photo_url' => $user->profile_photo_url,
                     'roles' => $user->roles->map(function ($role) {
                         return [
                             'id' => $role->id,
@@ -308,6 +309,7 @@ class AdminUserController extends Controller
                             'display_name' => $user->department->getFullNameAttribute()
                         ] : null,
                         'is_active' => $user->is_active,
+                        'profile_photo_url' => $user->profile_photo_url,
                         'roles' => $user->roles->map(function ($role) {
                             return [
                                 'id' => $role->id,
@@ -378,6 +380,7 @@ class AdminUserController extends Controller
                     'display_name' => $user->department->getFullNameAttribute()
                 ] : null,
                 'is_active' => $user->is_active ?? true,
+                'profile_photo_url' => $user->profile_photo_url,
                 'roles' => $user->roles->map(function ($role) {
                     return [
                         'id' => $role->id,

@@ -263,9 +263,7 @@ Route::middleware('auth:sanctum')->group(function () {
                 'display_name' => $user->department->getFullNameAttribute()
             ] : null,
             'is_active' => $user->is_active ?? true,
-            'profile_photo_url' => $user->profile_photo_path
-                ? asset('storage/' . $user->profile_photo_path)
-                : null,
+            'profile_photo_url' => $user->profile_photo_url,
             'role' => $primaryRole, // Normalized role field
             'role_name' => $primaryRole, // For backward compatibility
             'primary_role' => $primaryRole, // Explicit primary role

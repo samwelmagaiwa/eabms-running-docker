@@ -51,6 +51,7 @@ class UserProfileController extends Controller
                     'display_name' => $user->department->getFullNameAttribute()
                 ] : null,
                 'is_active' => $user->is_active ?? true,
+                'profile_photo_url' => $user->profile_photo_url,
                 'primary_role' => $user->getPrimaryRoleName(),
                 'roles' => $user->roles->pluck('name')->toArray(),
             ];
@@ -143,6 +144,7 @@ class UserProfileController extends Controller
                     'display_name' => $user->department->getFullNameAttribute()
                 ] : null,
                 'primary_role' => $user->getPrimaryRoleName(),
+                'profile_photo_url' => $user->profile_photo_url,
                 'is_active' => $user->is_active
             ];
 
@@ -324,6 +326,7 @@ class UserProfileController extends Controller
                     'full_name' => $user->department->getFullNameAttribute(),
                     'display_name' => $user->department->getFullNameAttribute()
                 ] : null,
+                'profile_photo_url' => $user->profile_photo_url,
             ];
 
             return response()->json([

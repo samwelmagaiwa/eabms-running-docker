@@ -26,6 +26,15 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole() || (bool) config('app.debug')) {
             $this->logSecurityFeaturesEnabled();
         }
+
+        // Force APP_URL for asset() and Storage::url()
+        if (!empty(config('app.url'))) {
+            \Illuminate\Support\Facades\URL::forceRootUrl(config('app.url'));
+            
+            if (str_starts_with(config('app.url'), 'https://')) {
+                \Illuminate\Support\Facades\URL::forceScheme('https');
+            }
+        }
     }
     
     /**
