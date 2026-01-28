@@ -1,6 +1,6 @@
 services:
   nginx:
-    image: nginx:alpine
+    image: nginx:stable-alpine
     container_name: eabms_nginx_local
     restart: unless-stopped
     ports:
@@ -12,7 +12,21 @@ services:
       - backend
 
   backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: eabms_backend
     volumes:
       - ./backend:/var/www
     env_file:
       - ./backend/.env
+
+  db:
+    container_name: eabms_db_local
+    environment:
+      MYSQL_DATABASE: backend-api-vue
+      MYSQL_USER: root
+      MYSQL_PASSWORD: ""
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
