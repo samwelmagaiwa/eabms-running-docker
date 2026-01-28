@@ -1,89 +1,88 @@
 <template>
   <div
-    class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm"
-    style="backdrop-filter: blur(12px)"
+    class="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-[9999] p-4"
   >
+    <!-- Main Modal -->
     <div
-      class="bg-white rounded-2xl w-full max-w-xl min-h-[520px] transform transition-all duration-500 scale-100 animate-slideUp border border-blue-100 shadow-2xl overflow-hidden"
-      style="
-        box-shadow:
-          0 25px 50px -12px rgba(30, 64, 175, 0.45),
-          0 15px 35px -12px rgba(37, 99, 235, 0.35),
-          0 0 0 1px rgba(255, 255, 255, 0.8);
-      "
+      class="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-slate-100 transform transition-all animate-modal-pop"
     >
-      <!-- Header -->
+      <!-- Premium Hero Header -->
       <div
-        class="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 p-8 text-center shadow-lg"
+        class="relative bg-gradient-to-br from-blue-700 via-blue-800 to-blue-900 p-10 text-center"
       >
-        <!-- Trophy Icon -->
-        <div
-          class="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-md flex items-center justify-center mx-auto mb-4 shadow-lg animate-pulse"
-        >
-          <i class="fas fa-trophy text-white text-xl drop-shadow-lg"></i>
+        <!-- Decoration Circles -->
+        <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16"></div>
+        <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full -ml-12 -mb-12"></div>
+
+        <!-- Animated Icon Container -->
+        <div class="relative inline-block mb-6">
+          <div
+            class="w-20 h-20 bg-gradient-to-tr from-amber-300 to-amber-500 rounded-2xl flex items-center justify-center mx-auto shadow-2xl animate-float"
+          >
+            <i class="fas fa-trophy text-white text-3xl drop-shadow-md"></i>
+          </div>
+          <!-- Sparkles -->
+          <div class="absolute -top-2 -right-2 animate-pulse">
+            <i class="fas fa-sparkles text-amber-300 text-sm"></i>
+          </div>
         </div>
 
-        <h2 class="text-3xl font-bold text-white mb-2 drop-shadow-lg">Congratulations!</h2>
-        <p class="text-blue-100 text-lg font-medium drop-shadow-sm">{{ userRoleDisplay }}</p>
+        <h2 class="text-3xl font-extrabold text-white mb-2 tracking-tight">Congratulations!</h2>
+        <div class="inline-flex items-center px-3 py-1 bg-white/10 rounded-full backdrop-blur-sm">
+          <span class="text-blue-100 text-sm font-semibold uppercase tracking-wider">{{
+            userRoleDisplay
+          }}</span>
+        </div>
       </div>
 
-      <!-- Body -->
-      <div class="px-8 pb-8 bg-blue-50/40">
-        <!-- User Name -->
-        <div class="text-center mb-6">
-          <h3 class="text-2xl font-bold text-white mb-3 drop-shadow-sm">
+      <!-- Content Section -->
+      <div class="p-10 bg-white">
+        <!-- User Info -->
+        <div class="text-center mb-8">
+          <div class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-2">
+            Welcome Aboard
+          </div>
+          <h3 class="text-3xl font-black text-slate-900 mb-4 tracking-tight">
             {{ userName }}
           </h3>
-          <p class="text-blue-100 text-lg leading-relaxed font-medium opacity-90">
-            You have successfully completed the onboarding process. Now you can proceed with your
-            requests.
+          <p class="text-slate-600 text-base leading-relaxed max-w-sm mx-auto">
+            Your onboarding is now officially complete. You have full access to the portal features.
           </p>
         </div>
 
-        <!-- Progress Steps - Compact -->
-        <div class="space-y-3 mb-6">
+        <!-- Checklist Cards -->
+        <div class="space-y-3 mb-10">
           <div
-            class="flex items-center space-x-3 p-3 bg-white/10 border border-white/20 backdrop-blur-sm"
+            v-for="(item, index) in [
+              'Terms of Service Accepted',
+              'ICT Policy Acknowledged',
+              'Declaration Form Submitted'
+            ]"
+            :key="index"
+            class="flex items-center gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100 transition-all hover:bg-slate-100/80 group"
           >
             <div
-              class="w-5 h-5 bg-green-500 rounded-sm flex items-center justify-center flex-shrink-0"
+              class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm transition-transform group-hover:scale-110"
             >
-              <i class="fas fa-check text-white text-sm"></i>
+              <i class="fas fa-check text-white text-[10px]"></i>
             </div>
-            <span class="text-white font-medium text-base">Terms of Service Accepted</span>
-          </div>
-
-          <div
-            class="flex items-center space-x-3 p-3 bg-white/10 border border-white/20 backdrop-blur-sm"
-          >
-            <div
-              class="w-5 h-5 bg-green-500 rounded-sm flex items-center justify-center flex-shrink-0"
-            >
-              <i class="fas fa-check text-white text-sm"></i>
-            </div>
-            <span class="text-white font-medium text-base">ICT Policy Acknowledged</span>
-          </div>
-
-          <div
-            class="flex items-center space-x-3 p-3 bg-white/10 border border-white/20 backdrop-blur-sm"
-          >
-            <div
-              class="w-5 h-5 bg-green-500 rounded-sm flex items-center justify-center flex-shrink-0"
-            >
-              <i class="fas fa-check text-white text-sm"></i>
-            </div>
-            <span class="text-white font-medium text-base">Declaration Form Submitted</span>
+            <span class="text-slate-700 font-bold text-sm">{{ item }}</span>
           </div>
         </div>
 
-        <!-- Action Button -->
+        <!-- Primary Action -->
         <button
           @click="handleContinue"
-          class="w-full bg-gradient-to-r from-white/20 to-white/10 hover:from-white/30 hover:to-white/20 text-white py-4 px-6 rounded-none font-semibold text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-white/50 border border-white/30 backdrop-blur-sm relative overflow-hidden group"
+          class="group relative w-full bg-slate-900 hover:bg-blue-600 text-white py-5 px-8 rounded-2xl font-bold text-lg transition-all duration-300 shadow-[0_10px_20px_rgba(15,23,42,0.15)] hover:shadow-[0_15px_30px_rgba(37,99,235,0.3)] active:scale-[0.98] overflow-hidden"
         >
-          <div class="relative z-10 flex items-center justify-center">
-            <i class="fas fa-arrow-right mr-2 text-lg"></i>
+          <div
+            class="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          ></div>
+          <div class="relative flex items-center justify-center gap-3">
             <span>Continue to Dashboard</span>
+            <i
+              class="fas fa-chevron-right text-sm transition-transform group-hover:translate-x-1"
+            ></i>
           </div>
         </button>
       </div>
@@ -121,73 +120,50 @@
 </script>
 
 <style scoped>
-  /* Enhanced slide up animation */
-  @keyframes slideUp {
-    from {
+  @keyframes modal-pop {
+    0% {
       opacity: 0;
-      transform: translateY(30px) scale(0.95);
+      transform: scale(0.9) translateY(20px);
     }
-    to {
+    100% {
       opacity: 1;
-      transform: translateY(0) scale(1);
+      transform: scale(1) translateY(0);
     }
   }
 
-  .animate-slideUp {
-    animation: slideUp 0.5s ease-out;
+  .animate-modal-pop {
+    animation: modal-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   }
 
-  /* Floating animation for trophy */
   @keyframes float {
     0%,
     100% {
-      transform: translateY(0px);
+      transform: translateY(0px) rotate(0deg);
     }
     50% {
-      transform: translateY(-5px);
+      transform: translateY(-8px) rotate(2deg);
     }
   }
 
   .animate-float {
-    animation: float 3s ease-in-out infinite;
+    animation: float 4s ease-in-out infinite;
   }
 
-  /* Simple backdrop blur */
-  .backdrop-blur-sm {
-    backdrop-filter: blur(4px);
-  }
-
-  /* Responsive design */
-  @media (max-width: 640px) {
-    .max-w-xl {
-      max-width: 95vw;
-    }
-
-    .px-8 {
-      padding-left: 1rem;
-      padding-right: 1rem;
-    }
-
-    .pb-8 {
-      padding-bottom: 1rem;
-    }
-
-    .p-8 {
-      padding: 1rem;
-    }
-  }
-
-  /* Accessibility */
-  @media (prefers-reduced-motion: reduce) {
-    .animate-slideUp {
-      animation: none;
-    }
-  }
-
-  /* Focus styles */
-  button:focus {
+  /* Custom focus ring for the button */
+  button:focus-visible {
     outline: 2px solid #3b82f6;
-    outline-offset: 2px;
+    outline-offset: 4px;
+  }
+
+  /* Responsive refinements */
+  @media (max-width: 640px) {
+    .p-10 {
+      padding: 1.5rem;
+    }
+
+    h3 {
+      font-size: 1.5rem;
+    }
   }
 </style>
 "
