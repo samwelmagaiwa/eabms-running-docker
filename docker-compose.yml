@@ -61,4 +61,38 @@ services:
       - app_data:/var/www
 
   nginx:
-    # ... rest of services ...
+    image: nginx:stable-alpine
+    container_name: eabms_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./backend:/var/www
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
+    networks:
+      - eabms_network
+
+  db:
+    image: mysql:8.0
+    container_name: eabms_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: eabms_prod
+      MYSQL_USER: samwel_eabms
+      MYSQL_PASSWORD: Samwel123@
+      MYSQL_ROOT_PASSWORD: Samwel123@
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/var/lib/mysql
+    networks:
+      - eabms_network
+
+networks:
+  eabms_network:
+    driver: bridge
+
+volumes:
+  app_data:
+  db_data:

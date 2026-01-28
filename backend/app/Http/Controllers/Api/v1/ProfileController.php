@@ -48,24 +48,17 @@ class ProfileController extends Controller
             $user->profile_photo_path = $path;
             $user->save();
 
-            $avatarUrl = rtrim(config('app.url'), '/') . '/storage/' . $path;
-
-            Log::info('User avatar updated', [
-                'user_id' => $user->id,
-                'path' => $path,
-            ]);
-
             return response()->json([
                 'success' => true,
                 'message' => 'Profile picture updated successfully.',
                 'data' => [
-                    'profile_photo_url' => $avatarUrl,
+                    'profile_photo_url' => $user->profile_photo_url,
                     'user' => [
                         'id' => $user->id,
                         'name' => $user->name,
                         'email' => $user->email,
                         'phone' => $user->phone,
-                        'profile_photo_url' => $avatarUrl,
+                        'profile_photo_url' => $user->profile_photo_url,
                     ],
                 ],
             ]);

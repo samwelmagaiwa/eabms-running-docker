@@ -342,7 +342,7 @@ class User extends Authenticatable
     public function getProfilePhotoUrlAttribute(): ?string
     {
         return $this->profile_photo_path
-            ? asset('storage/' . $this->profile_photo_path)
+            ? rtrim(config('app.url'), '/') . '/storage/' . $this->profile_photo_path
             : null;
     }
 
