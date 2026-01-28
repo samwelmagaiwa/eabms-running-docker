@@ -33,7 +33,7 @@ return [
     'sender_name' => env('SMS_SENDER_NAME', 'MLG'),
     'message_type' => env('SMS_MESSAGE_TYPE', 'text'),
     'delivery_report_url' => env('SMS_DELIVERY_REPORT_URL'),
-    'test_mode' => env('SMS_TEST_MODE', true),
+    'test_mode' => env('SMS_TEST_MODE', false),
 
     /*
     |--------------------------------------------------------------------------
