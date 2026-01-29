@@ -1,2 +1,0 @@
-"use strict";(self["webpackChunkfrontend"]=self["webpackChunkfrontend"]||[]).push([[5493],{5493:function(r,t,e){var s=e(274);const n={async createUser(r){try{const t=await s.A.post("/hod/users",r);return t.data}catch(t){throw console.error("Error creating HOD staff user:",t),t}}};t["default"]=n}}]);
-//# sourceMappingURL=5493.713ebc1d.js.map
