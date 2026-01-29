@@ -1,0 +1,54 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Backend - Composer
+backend/vendor/
+backend/vendor.rar
+
+# Backend - Laravel
+backend/.env
+backend/.env.example
+backend/.env.*.example
+backend/storage/
+backend/bootstrap/cache/
+backend/tests/
+backend/phpunit.xml
+
+# Frontend - Node
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# IDE
+.idea
+.vscode
+.editorconfig
+
+# Logs & Temp
+*.log
+npm-debug.log
+yarn-error.log
+
+# Docker
+backend/Dockerfile
+backend/Dockerfile.dev
+docker-compose.yml
+docker-compose.override.yml
+.dockerignore
+
+# Other Large/Unnecessary Files
+backend/routes.json
+backend/routes_check.txt
+backend/routes_list.txt
+*.md
+
+# Root level node_modules (if any)
+node_modules/
+
+# Storage and bootstrap cache at root
+storage/
+bootstrap/

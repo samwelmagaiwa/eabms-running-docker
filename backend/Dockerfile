@@ -1,4 +1,22 @@
-# Stage 1: Build stage
+# Stage 0: Frontend build stage
+FROM node:18-alpine AS frontend-builder
+
+WORKDIR /app
+
+# Copy frontend package files
+COPY frontend/package*.json ./
+
+# Install dependencies with caching
+RUN --mount=type=cache,target=/root/.npm \
+    npm install
+
+# Copy frontend source code
+COPY frontend/ ./
+
+# Build frontend
+RUN npm run build
+
+# Stage 1: Backend build stage
 FROM php:8.2-fpm-alpine AS builder
 
 # Install the PHP extension installer
@@ -31,7 +49,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www
 
 # Copy only composer files first for better caching
-COPY composer.json composer.lock ./
+COPY backend/composer.json backend/composer.lock ./
 
 # Use BuildKit cache mount for composer
 RUN --mount=type=cache,target=/tmp/cache \
@@ -56,10 +74,14 @@ RUN --mount=type=cache,target=/var/cache/apk \
 WORKDIR /var/www
 
 # Copy application code
-COPY . .
+COPY backend/ .
 
 # Copy vendor from builder stage
 COPY --from=builder /var/www/vendor ./vendor
+
+# Copy built frontend from frontend-builder stage
+COPY --from=frontend-builder /app/dist ./public
+
 # Copy PHP extensions from builder stage
 COPY --from=builder /usr/local/lib/php/extensions /usr/local/lib/php/extensions
 COPY --from=builder /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
