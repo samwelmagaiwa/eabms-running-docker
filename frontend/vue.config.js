@@ -8,6 +8,16 @@ module.exports = defineConfig({
   runtimeCompiler: true,
   publicPath: process.env.NODE_ENV === 'production' ? '/' : '/',
 
+  // Set custom page title
+  pages: {
+    index: {
+      entry: 'src/main.js',
+      template: 'public/index.html',
+      filename: 'index.html',
+      title: 'EABMS-mloganzila'
+    }
+  },
+
   // Best practice: do not run ESLint as part of production builds.
   // Keep linting in dev/CI via `npm run lint`.
   lintOnSave: process.env.NODE_ENV !== 'production',
