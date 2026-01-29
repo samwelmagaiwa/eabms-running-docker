@@ -56,8 +56,8 @@ services:
       SANCTUM_STATEFUL_DOMAINS: eabms.mloganzila.or.tz
       
     volumes:
-      - ./storage:/var/www/storage
-      - ./bootstrap/cache:/var/www/bootstrap/cache
+      - ./backend/storage:/var/www/storage
+      - ./backend/bootstrap/cache:/var/www/bootstrap/cache
       - app_data:/var/www
 
   nginx:

@@ -20,6 +20,15 @@ services:
       - ./backend:/var/www
     env_file:
       - ./backend/.env
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_URL=http://localhost:8000
+      - CORS_ALLOWED_ORIGINS=http://localhost:8080,http://127.0.0.1:8080
+
+    networks:
+      - eabms_network
+
 
   db:
     container_name: eabms_db_local

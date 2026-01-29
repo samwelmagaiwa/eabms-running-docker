@@ -769,8 +769,8 @@
           class="inline-block bg-white/10 backdrop-blur-sm border border-blue-300/30 px-6 py-3 rounded-xl shadow-lg"
         >
           <p class="text-sm text-blue-100">
-            © 2025 Muhimbili National Hospital - ICT Department | Policy effective as of
-            publication date
+            © 2025 Muhimbili National Hospital - ICT Department | Policy effective as of publication
+            date
           </p>
         </div>
       </div>
