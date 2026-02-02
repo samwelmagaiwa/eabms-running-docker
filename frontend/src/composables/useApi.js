@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import axios from 'axios'
 
 // API configuration
-const API_BASE_URL = process.env.VUE_APP_API_URL || 'http://localhost:8000/api'
+const API_BASE_URL = process.env.VUE_APP_API_URL || '/api'
 
 // Create axios instance with default config
 const apiClient = axios.create({
