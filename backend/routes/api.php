@@ -1,5 +1,4 @@
 <?php
-
 use App\Http\Controllers\Api\v1\AuthController;
 use App\Http\Controllers\Api\v1\OnboardingController;
 use App\Http\Controllers\Api\v1\AdminController;
@@ -218,7 +217,94 @@ Route::match(['GET', 'POST'], '/sms/delivery-report', function (Request $request
         'type' => $smsLog->type,
         'shootId' => $shootId,
         'delivery_status' => $deliveryStatus,
+        'reference_id' => $smsLog->reference_id,
+        'reference_type' => $smsLog->reference_type,
     ]);
+
+    // Update the related request's SMS status fields if reference exists
+    if (!empty($smsLog->reference_id) && !empty($smsLog->reference_type) && !empty($deliveryStatus)) {
+        try {
+            // Determine if delivery was successful based on provider status
+            $isDelivered = in_array(strtolower((string) $deliveryStatus), ['delivered', 'success', 'sent', 'accepted']);
+            $newStatus = $isDelivered ? 'delivered' : 'failed';
+
+            // Update UserAccess records (SMS status fields)
+            if (str_contains($smsLog->reference_type, 'UserAccess')) {
+                $accessRequest = \App\Models\UserAccess::find($smsLog->reference_id);
+
+                if ($accessRequest) {
+                    $updateFields = [];
+
+                    // Determine which SMS status field to update based on message type
+                    switch ($smsLog->type) {
+                        case 'approval_notification':
+                            // SMS sent to approvers (HOD, Divisional, etc.)
+                            if (($accessRequest->sms_to_hod_status ?? null) === 'sent') {
+                                $updateFields['sms_to_hod_status'] = $newStatus;
+                            } elseif (($accessRequest->sms_to_divisional_status ?? null) === 'sent') {
+                                $updateFields['sms_to_divisional_status'] = $newStatus;
+                            } elseif (($accessRequest->sms_to_ict_director_status ?? null) === 'sent') {
+                                $updateFields['sms_to_ict_director_status'] = $newStatus;
+                            } elseif (($accessRequest->sms_to_head_it_status ?? null) === 'sent') {
+                                $updateFields['sms_to_head_it_status'] = $newStatus;
+                            }
+                            break;
+                        case 'ict_officer_assignment':
+                            if (($accessRequest->sms_to_ict_officer_status ?? null) === 'sent') {
+                                $updateFields['sms_to_ict_officer_status'] = $newStatus;
+                            }
+                            break;
+                        case 'approval':
+                        case 'access_granted':
+                        case 'assignment_notification':
+                        case 'cancellation':
+                        case 'rejection':
+                            // SMS sent to requester
+                            if (($accessRequest->sms_to_requester_status ?? null) === 'sent') {
+                                $updateFields['sms_to_requester_status'] = $newStatus;
+                            }
+                            break;
+                    }
+
+                    if (!empty($updateFields)) {
+                        $accessRequest->update($updateFields);
+                        \Illuminate\Support\Facades\Log::info('Updated UserAccess SMS status from delivery report', [
+                            'request_id' => $accessRequest->id,
+                            'sms_type' => $smsLog->type,
+                            'updated_fields' => $updateFields,
+                            'delivery_status' => $deliveryStatus,
+                        ]);
+                    }
+                }
+            }
+
+            // Update BookingService records
+            if (str_contains($smsLog->reference_type, 'BookingService')) {
+                $booking = \App\Models\BookingService::find($smsLog->reference_id);
+
+                if ($booking) {
+                    $updateFields = [];
+                    if (($booking->sms_to_requester_status ?? null) === 'sent') {
+                        $updateFields['sms_to_requester_status'] = $newStatus;
+                    }
+                    if (!empty($updateFields)) {
+                        $booking->update($updateFields);
+                        \Illuminate\Support\Facades\Log::info('Updated BookingService SMS status from delivery report', [
+                            'booking_id' => $booking->id,
+                            'delivery_status' => $deliveryStatus,
+                        ]);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error updating SMS status from delivery report', [
+                'error' => $e->getMessage(),
+                'sms_log_id' => $smsLog->id,
+                'reference_type' => $smsLog->reference_type,
+                'reference_id' => $smsLog->reference_id,
+            ]);
+        }
+    }
 
     return response()->json(['success' => true]);
 });
@@ -1004,12 +1090,12 @@ Route::prefix('hod')->middleware('role:head_of_department,divisional_director,ic
 
     // Filtered User Access routes (for admin user management)
     Route::get('/jeeva-users', [UserAccessController::class, 'getJeevaUsers'])
-        ->middleware('role:admin')
+        ->middleware('role:admin,super_admin')
         ->name('admin.jeeva-users');
     Route::get('/wellsoft-users', [UserAccessController::class, 'getWellsoftUsers'])
-        ->middleware('role:admin')
+        ->middleware('role:admin,super_admin')
         ->name('admin.wellsoft-users');
     Route::get('/internet-users', [UserAccessController::class, 'getInternetUsers'])
-        ->middleware('role:admin')
+        ->middleware('role:admin,super_admin')
         ->name('admin.internet-users');
 });

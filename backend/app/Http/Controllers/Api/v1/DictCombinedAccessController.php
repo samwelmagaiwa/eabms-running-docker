@@ -387,25 +387,22 @@ class DictCombinedAccessController extends Controller
 
             DB::commit();
             
-            // Send SMS notifications if approved
-            if ($approvalStatus === 'approved') {
-                try {
+            // Send SMS notifications based on status
+            try {
+                $sms = app(SmsModule::class);
+                $roleName = $isHeadOfIT ? 'Head of IT' : 'ICT Director';
+                $smsLevel = $isHeadOfIT ? 'head_it' : 'ict_director';
+                
+                if ($approvalStatus === 'approved') {
                     $nextApprover = null;
-                    $smsLevel = '';
                     
-                    if ($isHeadOfIT) {
-                        // Head of IT approved - no next approver, goes to ICT Officer
-                        $smsLevel = 'head_it';
-                    } else {
+                    if (!$isHeadOfIT) {
                         // ICT Director approved - next is Head of IT
                         $nextApprover = User::whereHas('roles', fn($q) => 
                             $q->where('name', 'head_of_it')
                         )->first();
-                        $smsLevel = 'ict_director';
                     }
                     
-                    // Send SMS notifications
-                    $sms = app(SmsModule::class);
                     $sms->notifyRequestApproved(
                         $userAccessRequest,
                         auth()->user(),
@@ -413,16 +410,32 @@ class DictCombinedAccessController extends Controller
                         $nextApprover
                     );
                     
-                    Log::info(($isHeadOfIT ? 'Head of IT' : 'ICT Director') . ' SMS notifications sent', [
+                    Log::info($roleName . ' approval SMS notifications sent', [
                         'request_id' => $id,
                         'next_approver' => $nextApprover ? $nextApprover->name : 'None (ICT Officer)'
                     ]);
-                } catch (\Exception $e) {
-                    Log::warning(($isHeadOfIT ? 'Head of IT' : 'ICT Director') . ' SMS notification failed', [
-                        'request_id' => $id,
-                        'error' => $e->getMessage()
+                } elseif ($approvalStatus === 'rejected') {
+                    // Send rejection SMS to staff
+                    $rejectionReason = $isHeadOfIT 
+                        ? ($validatedData['head_it_comments'] ?? null)
+                        : ($validatedData['dict_comments'] ?? null);
+                    
+                    $sms->notifyRequestRejected(
+                        $userAccessRequest,
+                        auth()->user(),
+                        $smsLevel,
+                        $rejectionReason
+                    );
+                    
+                    Log::info($roleName . ' rejection SMS notification sent', [
+                        'request_id' => $id
                     ]);
                 }
+            } catch (\Exception $e) {
+                Log::warning(($isHeadOfIT ? 'Head of IT' : 'ICT Director') . ' SMS notification failed', [
+                    'request_id' => $id,
+                    'error' => $e->getMessage()
+                ]);
             }
 
             $roleName = $isHeadOfIT ? 'Head of IT' : 'ICT Director';
@@ -486,6 +499,25 @@ class DictCombinedAccessController extends Controller
             ]);
 
             DB::commit();
+
+            // Send SMS notification to requester about cancellation
+            try {
+                $sms = app(SmsModule::class);
+                $sms->notifyRequestCancelled(
+                    $userAccessRequest,
+                    auth()->user(),
+                    $validatedData['reason']
+                );
+                
+                Log::info('ICT Director cancellation SMS notification sent', [
+                    'request_id' => $id
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('ICT Director cancellation SMS notification failed', [
+                    'request_id' => $id,
+                    'error' => $e->getMessage()
+                ]);
+            }
 
             Log::info('ICT Director Combined Access: Request cancelled successfully', [
                 'request_id' => $id
@@ -694,6 +726,13 @@ class DictCombinedAccessController extends Controller
             'created_at' => $request->created_at,
             'updated_at' => $request->updated_at,
             'submission_date' => $request->created_at,
+            
+            // Cancellation metadata for UI logic
+            'cancellation_reason' => $request->cancellation_reason,
+            'cancelled_by' => $request->cancelled_by,
+            'cancelled_at' => $request->cancelled_at,
+            'cancelled_by_name' => $request->cancelled_by ? (\App\Models\User::find($request->cancelled_by)?->name ?? 'System') : null,
+            'cancelled_by_role' => $request->cancelled_by ? (\App\Models\User::find($request->cancelled_by)?->roles->first()?->name ?? null) : null,
             
             // HOD approval info (for context)
             'hod_comments' => $request->hod_comments ?? '',
@@ -997,6 +1036,8 @@ class DictCombinedAccessController extends Controller
                     // Cancellation/rejection info
                     'cancelled_at' => $request->cancelled_at,
                     'cancelled_by' => $request->cancelled_by,
+                    'cancelled_by_name' => $request->cancelled_by ? (\App\Models\User::find($request->cancelled_by)?->name ?? 'System') : null,
+                    'cancelled_by_role' => $request->cancelled_by ? (\App\Models\User::find($request->cancelled_by)?->roles->first()?->name ?? null) : null,
                     'cancellation_reason' => $request->cancellation_reason,
                     
                     // Timestamps

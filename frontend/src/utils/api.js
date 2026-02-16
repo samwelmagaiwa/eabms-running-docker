@@ -107,3 +107,63 @@ export async function fetchInternetUsers(params = {}) {
     }
   }
 }
+
+/**
+ * Delete a user access request (Soft delete/Cancel)
+ */
+export async function deleteUserAccess(requestId) {
+  try {
+    console.log('🗑️ Deleting user access request:', requestId)
+    const { data } = await apiClient.delete(`/v1/user-access/${requestId}`)
+    console.log('✅ Delete response:', data)
+    return {
+      success: data.success ?? false,
+      message: data.message || 'Request deleted successfully'
+    }
+  } catch (error) {
+    console.error('❌ Failed to delete user access:', error)
+    console.error('Error details:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      message: error.response?.data?.message,
+      data: error.response?.data
+    })
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to delete request'
+    }
+  }
+}
+
+/**
+ * Download PDF for a user access request (with authentication)
+ */
+export async function downloadUserAccessPdf(requestId) {
+  try {
+    const response = await apiClient.get(`/both-service-form/${requestId}/export-pdf`, {
+      responseType: 'blob'
+    })
+
+    // Create blob URL and trigger download
+    const blob = new Blob([response.data], { type: 'application/pdf' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `user-access-request-${requestId}.pdf`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+
+    return {
+      success: true,
+      message: 'PDF downloaded successfully'
+    }
+  } catch (error) {
+    console.error('❌ Failed to download PDF:', error)
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to download PDF'
+    }
+  }
+}

@@ -3,7 +3,7 @@
     <Header />
     <div class="flex flex-1 overflow-hidden">
       <ModernSidebar />
-      <main class="flex-1 p-6 overflow-y-auto relative user-dashboard-main">
+      <main class="flex-1 p-6 pb-12 overflow-y-auto relative user-dashboard-main">
         <!-- Medical Background Pattern -->
         <div class="absolute inset-0 overflow-hidden">
           <!-- Medical Cross Pattern -->
@@ -263,12 +263,12 @@
               ></div>
 
               <!-- Layer 6: Content Layer -->
-              <div class="relative z-20 p-8 h-full">
-                <div class="flex items-center justify-between mb-4">
+              <div class="relative z-20 p-6 h-full flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-2">
                   <!-- Enhanced Icon Container -->
                   <div class="relative">
                     <div
-                      class="w-14 h-14 rounded-xl flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300 border relative overflow-hidden"
+                      class="w-12 h-12 rounded-xl flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300 border relative overflow-hidden"
                       style="
                         background: linear-gradient(135deg, #ff0000 0%, #ff0000 100%);
                         border-color: rgba(255, 0, 0, 0.5);
@@ -278,122 +278,59 @@
                       <div
                         class="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"
                       ></div>
-                      <div
-                        class="absolute inset-0 bg-gradient-to-tl from-red-400/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                        style="
-                          background: linear-gradient(
-                            135deg,
-                            transparent 0%,
-                            rgba(255, 0, 0, 0.3) 100%
-                          );
-                        "
-                      ></div>
-                      <i class="fas fa-clock text-white text-xl relative z-10 drop-shadow-lg" />
+                      <i class="fas fa-clock text-white text-lg relative z-10 drop-shadow-lg" />
                       <!-- Pulsing dot -->
                       <div
-                        class="absolute top-1 right-1 w-3 h-3 rounded-full animate-ping opacity-75"
+                        class="absolute top-1 right-1 w-2 h-2 rounded-full animate-ping opacity-75"
                         style="background-color: rgba(255, 0, 0, 0.8)"
                       ></div>
-                      <div
-                        class="absolute top-1 right-1 w-3 h-3 rounded-full"
-                        style="background-color: rgba(255, 0, 0, 0.6)"
-                      ></div>
                     </div>
-                    <!-- Icon shadow -->
-                    <div
-                      class="absolute inset-0 rounded-xl blur-md group-hover:blur-lg transition-all duration-300 -z-10"
-                      style="background-color: rgba(255, 0, 0, 0.2)"
-                    ></div>
                   </div>
 
                   <!-- Enhanced Status Badge -->
                   <div class="relative">
                     <div
-                      class="flex items-center space-x-2 px-4 py-2 rounded-full border backdrop-blur-sm transition-colors duration-300"
+                      class="flex items-center space-x-2 px-3 py-1.5 rounded-full border backdrop-blur-sm transition-colors duration-300"
                       style="
                         background-color: rgba(255, 0, 0, 0.3);
                         border-color: rgba(255, 0, 0, 0.4);
                       "
                     >
                       <div
-                        class="w-2 h-2 rounded-full animate-pulse"
+                        class="w-1.5 h-1.5 rounded-full animate-pulse"
                         style="background-color: rgba(255, 0, 0, 0.8)"
                       ></div>
                       <span
-                        class="text-xs font-medium tracking-wide"
+                        class="text-[10px] font-medium tracking-wide"
                         style="color: rgba(255, 255, 255, 0.9)"
                         >Processing</span
                       >
                     </div>
-                    <!-- Badge glow -->
-                    <div
-                      class="absolute inset-0 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"
-                      style="background-color: rgba(255, 0, 0, 0.2)"
-                    ></div>
                   </div>
                 </div>
 
-                <!-- Enhanced Title -->
-                <h3
-                  class="text-base font-bold text-white mb-2 drop-shadow-lg transition-colors duration-300"
-                >
-                  Under Review
-                </h3>
-
-                <!-- Enhanced Number Display -->
-                <div class="relative mb-6">
-                  <div
-                    class="text-3xl font-bold drop-shadow-lg relative group-hover:scale-105 transition-transform duration-300"
-                    style="color: #ffffff"
-                  >
+                <div>
+                  <h3 class="text-xs font-bold text-white mb-1 drop-shadow-lg">Under Review</h3>
+                  <div class="text-2xl font-bold text-white mb-2 drop-shadow-lg">
                     <span v-if="isLoadingStats" class="animate-pulse">--</span>
                     <span v-else>{{ dashboardStats.underReview }}</span>
-                    <!-- Number glow layers -->
-                    <div
-                      class="absolute -inset-4 blur-xl opacity-50 group-hover:opacity-100 transition-opacity duration-300 rounded-full"
-                      style="background-color: rgba(255, 0, 0, 0.15)"
-                    ></div>
-                    <div
-                      class="absolute -inset-2 blur-lg opacity-60 group-hover:opacity-90 transition-opacity duration-500 rounded-full"
-                      style="background-color: rgba(255, 0, 0, 0.2)"
-                    ></div>
                   </div>
-                  <!-- Floating particles -->
-                  <div
-                    class="absolute top-0 right-0 w-1 h-1 rounded-full animate-ping"
-                    style="animation-delay: 0.5s; background-color: rgba(255, 0, 0, 0.8)"
-                  ></div>
-                  <div
-                    class="absolute bottom-0 left-0 w-1 h-1 rounded-full animate-ping"
-                    style="animation-delay: 1s; background-color: rgba(255, 0, 0, 0.8)"
-                  ></div>
-                </div>
 
-                <!-- Enhanced Progress Bar -->
-                <div class="relative">
-                  <div
-                    class="w-full rounded-full h-3 overflow-hidden border"
-                    style="
-                      background-color: rgba(255, 0, 0, 0.3);
-                      border-color: rgba(255, 0, 0, 0.3);
-                    "
-                  >
+                  <div class="relative">
                     <div
-                      class="h-full rounded-full relative overflow-hidden group-hover:shadow-lg transition-shadow duration-300"
-                      style="background: linear-gradient(90deg, #ff0000 0%, #ff0000 100%)"
-                      :style="`width: ${dashboardStats.processingPercentage}%`"
+                      class="w-full rounded-full h-2 overflow-hidden border"
+                      style="
+                        background-color: rgba(255, 0, 0, 0.3);
+                        border-color: rgba(255, 0, 0, 0.3);
+                      "
                     >
-                      <!-- Progress shine effect -->
                       <div
-                        class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 animate-progress"
+                        class="h-full rounded-full relative overflow-hidden"
+                        style="background: linear-gradient(90deg, #ff0000 0%, #ff0000 100%)"
+                        :style="`width: ${dashboardStats.processingPercentage}%`"
                       ></div>
                     </div>
                   </div>
-                  <!-- Progress glow -->
-                  <div
-                    class="absolute inset-0 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    style="background-color: rgba(255, 0, 0, 0.1)"
-                  ></div>
                 </div>
               </div>
 
@@ -476,12 +413,12 @@
               ></div>
 
               <!-- Layer 6: Content Layer -->
-              <div class="relative z-20 p-8 h-full">
-                <div class="flex items-center justify-between mb-4">
+              <div class="relative z-20 p-6 h-full flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-2">
                   <!-- Enhanced Icon Container -->
                   <div class="relative">
                     <div
-                      class="w-14 h-14 rounded-xl flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300 border relative overflow-hidden"
+                      class="w-12 h-12 rounded-xl flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300 border relative overflow-hidden"
                       style="
                         background: linear-gradient(
                           135deg,
@@ -495,130 +432,67 @@
                       <div
                         class="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"
                       ></div>
-                      <div
-                        class="absolute inset-0 bg-gradient-to-tl from-blue-400/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                        style="
-                          background: linear-gradient(
-                            135deg,
-                            transparent 0%,
-                            rgba(37, 99, 235, 0.3) 100%
-                          );
-                        "
-                      ></div>
                       <i
-                        class="fas fa-check-circle text-white text-xl relative z-10 drop-shadow-lg"
+                        class="fas fa-check-circle text-white text-lg relative z-10 drop-shadow-lg"
                       />
                       <!-- Success indicator -->
                       <div
-                        class="absolute top-1 right-1 w-3 h-3 rounded-full animate-ping opacity-75"
+                        class="absolute top-1 right-1 w-2 h-2 rounded-full animate-ping opacity-75"
                         style="background-color: rgba(37, 99, 235, 0.8)"
                       ></div>
-                      <div
-                        class="absolute top-1 right-1 w-3 h-3 rounded-full"
-                        style="background-color: rgba(37, 99, 235, 0.6)"
-                      ></div>
                     </div>
-                    <!-- Icon shadow -->
-                    <div
-                      class="absolute inset-0 rounded-xl blur-md group-hover:blur-lg transition-all duration-300 -z-10"
-                      style="background-color: rgba(37, 99, 235, 0.2)"
-                    ></div>
                   </div>
 
                   <!-- Enhanced Status Badge -->
                   <div class="relative">
                     <div
-                      class="flex items-center space-x-2 px-4 py-2 rounded-full border backdrop-blur-sm transition-colors duration-300"
+                      class="flex items-center space-x-2 px-3 py-1.5 rounded-full border backdrop-blur-sm transition-colors duration-300"
                       style="
                         background-color: rgba(37, 99, 235, 0.3);
                         border-color: rgba(37, 99, 235, 0.4);
                       "
                     >
                       <div
-                        class="w-2 h-2 rounded-full animate-pulse"
+                        class="w-1.5 h-1.5 rounded-full animate-pulse"
                         style="background-color: rgba(37, 99, 235, 0.8)"
                       ></div>
                       <span
-                        class="text-xs font-medium tracking-wide"
+                        class="text-[10px] font-medium tracking-wide"
                         style="color: rgba(255, 255, 255, 0.9)"
                         >Completed</span
                       >
                     </div>
-                    <!-- Badge glow -->
-                    <div
-                      class="absolute inset-0 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"
-                      style="background-color: rgba(37, 99, 235, 0.2)"
-                    ></div>
                   </div>
                 </div>
 
-                <!-- Enhanced Title -->
-                <h3
-                  class="text-base font-bold text-white mb-2 drop-shadow-lg transition-colors duration-300"
-                >
-                  Granted Access
-                </h3>
-
-                <!-- Enhanced Number Display -->
-                <div class="relative mb-6">
-                  <div
-                    class="text-3xl font-bold drop-shadow-lg relative group-hover:scale-105 transition-transform duration-300"
-                    style="color: #ffffff"
-                  >
+                <div>
+                  <h3 class="text-xs font-bold text-white mb-1 drop-shadow-lg">Granted Access</h3>
+                  <div class="text-2xl font-bold text-white mb-2 drop-shadow-lg">
                     <span v-if="isLoadingStats" class="animate-pulse">--</span>
                     <span v-else>{{ dashboardStats.grantedAccess }}</span>
-                    <!-- Number glow layers -->
-                    <div
-                      class="absolute -inset-4 blur-xl opacity-50 group-hover:opacity-100 transition-opacity duration-300 rounded-full"
-                      style="background-color: rgba(37, 99, 235, 0.15)"
-                    ></div>
-                    <div
-                      class="absolute -inset-2 blur-lg opacity-60 group-hover:opacity-90 transition-opacity duration-500 rounded-full"
-                      style="background-color: rgba(37, 99, 235, 0.2)"
-                    ></div>
                   </div>
-                  <!-- Floating particles -->
-                  <div
-                    class="absolute top-0 right-0 w-1 h-1 rounded-full animate-ping"
-                    style="animation-delay: 0.5s; background-color: rgba(37, 99, 235, 0.8)"
-                  ></div>
-                  <div
-                    class="absolute bottom-0 left-0 w-1 h-1 rounded-full animate-ping"
-                    style="animation-delay: 1s; background-color: rgba(37, 99, 235, 0.8)"
-                  ></div>
-                </div>
 
-                <!-- Enhanced Progress Bar -->
-                <div class="relative">
-                  <div
-                    class="w-full rounded-full h-3 overflow-hidden border"
-                    style="
-                      background-color: rgba(37, 99, 235, 0.3);
-                      border-color: rgba(37, 99, 235, 0.3);
-                    "
-                  >
+                  <div class="relative">
                     <div
-                      class="h-full rounded-full relative overflow-hidden group-hover:shadow-lg transition-shadow duration-300"
+                      class="w-full rounded-full h-2 overflow-hidden border"
                       style="
-                        background: linear-gradient(
-                          90deg,
-                          rgb(37, 99, 235) 0%,
-                          rgb(29, 78, 216) 100%
-                        );
+                        background-color: rgba(37, 99, 235, 0.3);
+                        border-color: rgba(37, 99, 235, 0.3);
                       "
-                      :style="`width: ${dashboardStats.completedPercentage}%`"
                     >
-                      <!-- Progress shine effect -->
                       <div
-                        class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 animate-progress"
+                        class="h-full rounded-full relative overflow-hidden"
+                        style="
+                          background: linear-gradient(
+                            90deg,
+                            rgb(37, 99, 235) 0%,
+                            rgb(29, 78, 216) 100%
+                          );
+                        "
+                        :style="`width: ${dashboardStats.completedPercentage}%`"
                       ></div>
                     </div>
                   </div>
-                  <!-- Progress glow -->
-                  <div
-                    class="absolute inset-0 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    style="background-color: rgba(37, 99, 235, 0.1)"
-                  ></div>
                 </div>
               </div>
 
@@ -701,12 +575,12 @@
               ></div>
 
               <!-- Layer 6: Content Layer -->
-              <div class="relative z-20 p-8 h-full">
-                <div class="flex items-center justify-between mb-4">
+              <div class="relative z-20 p-6 h-full flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-2">
                   <!-- Enhanced Icon Container -->
                   <div class="relative">
                     <div
-                      class="w-14 h-14 rounded-xl flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300 border relative overflow-hidden"
+                      class="w-12 h-12 rounded-xl flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300 border relative overflow-hidden"
                       style="
                         background: linear-gradient(
                           135deg,
@@ -720,128 +594,65 @@
                       <div
                         class="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"
                       ></div>
-                      <div
-                        class="absolute inset-0 bg-gradient-to-tl from-red-400/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                        style="
-                          background: linear-gradient(
-                            135deg,
-                            transparent 0%,
-                            rgba(220, 38, 38, 0.3) 100%
-                          );
-                        "
-                      ></div>
-                      <i class="fas fa-edit text-white text-xl relative z-10 drop-shadow-lg" />
+                      <i class="fas fa-edit text-white text-lg relative z-10 drop-shadow-lg" />
                       <!-- Revision indicator -->
                       <div
-                        class="absolute top-1 right-1 w-3 h-3 rounded-full animate-ping opacity-75"
+                        class="absolute top-1 right-1 w-2 h-2 rounded-full animate-ping opacity-75"
                         style="background-color: rgba(220, 38, 38, 0.8)"
                       ></div>
-                      <div
-                        class="absolute top-1 right-1 w-3 h-3 rounded-full"
-                        style="background-color: rgba(220, 38, 38, 0.6)"
-                      ></div>
                     </div>
-                    <!-- Icon shadow -->
-                    <div
-                      class="absolute inset-0 rounded-xl blur-md group-hover:blur-lg transition-all duration-300 -z-10"
-                      style="background-color: rgba(220, 38, 38, 0.2)"
-                    ></div>
                   </div>
 
                   <!-- Enhanced Status Badge -->
                   <div class="relative">
                     <div
-                      class="flex items-center space-x-2 px-4 py-2 rounded-full border backdrop-blur-sm transition-colors duration-300"
+                      class="flex items-center space-x-2 px-3 py-1.5 rounded-full border backdrop-blur-sm transition-colors duration-300"
                       style="
                         background-color: rgba(220, 38, 38, 0.3);
                         border-color: rgba(220, 38, 38, 0.4);
                       "
                     >
                       <div
-                        class="w-2 h-2 rounded-full animate-pulse"
+                        class="w-1.5 h-1.5 rounded-full animate-pulse"
                         style="background-color: rgba(220, 38, 38, 0.8)"
                       ></div>
                       <span
-                        class="text-xs font-medium tracking-wide"
+                        class="text-[10px] font-medium tracking-wide"
                         style="color: rgba(255, 255, 255, 0.9)"
                         >Reviewed</span
                       >
                     </div>
-                    <!-- Badge glow -->
-                    <div
-                      class="absolute inset-0 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"
-                      style="background-color: rgba(220, 38, 38, 0.2)"
-                    ></div>
                   </div>
                 </div>
 
-                <!-- Enhanced Title -->
-                <h3
-                  class="text-base font-bold text-white mb-2 drop-shadow-lg transition-colors duration-300"
-                >
-                  Needs Revision
-                </h3>
-
-                <!-- Enhanced Number Display -->
-                <div class="relative mb-6">
-                  <div
-                    class="text-3xl font-bold drop-shadow-lg relative group-hover:scale-105 transition-transform duration-300"
-                    style="color: #ffffff"
-                  >
+                <div>
+                  <h3 class="text-xs font-bold text-white mb-1 drop-shadow-lg">Needs Revision</h3>
+                  <div class="text-2xl font-bold text-white mb-2 drop-shadow-lg">
                     <span v-if="isLoadingStats" class="animate-pulse">--</span>
                     <span v-else>{{ dashboardStats.needsRevision }}</span>
-                    <!-- Number glow layers -->
-                    <div
-                      class="absolute -inset-4 blur-xl opacity-50 group-hover:opacity-100 transition-opacity duration-300 rounded-full"
-                      style="background-color: rgba(220, 38, 38, 0.15)"
-                    ></div>
-                    <div
-                      class="absolute -inset-2 blur-lg opacity-60 group-hover:opacity-90 transition-opacity duration-500 rounded-full"
-                      style="background-color: rgba(220, 38, 38, 0.2)"
-                    ></div>
                   </div>
-                  <!-- Floating particles -->
-                  <div
-                    class="absolute top-0 right-0 w-1 h-1 rounded-full animate-ping"
-                    style="animation-delay: 0.5s; background-color: rgba(220, 38, 38, 0.8)"
-                  ></div>
-                  <div
-                    class="absolute bottom-0 left-0 w-1 h-1 rounded-full animate-ping"
-                    style="animation-delay: 1s; background-color: rgba(220, 38, 38, 0.8)"
-                  ></div>
-                </div>
 
-                <!-- Enhanced Progress Bar -->
-                <div class="relative">
-                  <div
-                    class="w-full rounded-full h-3 overflow-hidden border"
-                    style="
-                      background-color: rgba(220, 38, 38, 0.3);
-                      border-color: rgba(220, 38, 38, 0.3);
-                    "
-                  >
+                  <div class="relative">
                     <div
-                      class="h-full rounded-full relative overflow-hidden group-hover:shadow-lg transition-shadow duration-300"
+                      class="w-full rounded-full h-2 overflow-hidden border"
                       style="
-                        background: linear-gradient(
-                          90deg,
-                          rgb(220, 38, 38) 0%,
-                          rgb(185, 28, 28) 100%
-                        );
+                        background-color: rgba(220, 38, 38, 0.3);
+                        border-color: rgba(220, 38, 38, 0.3);
                       "
-                      :style="`width: ${dashboardStats.revisionPercentage}%`"
                     >
-                      <!-- Progress shine effect -->
                       <div
-                        class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 animate-progress"
+                        class="h-full rounded-full relative overflow-hidden"
+                        style="
+                          background: linear-gradient(
+                            90deg,
+                            rgb(220, 38, 38) 0%,
+                            rgb(185, 28, 28) 100%
+                          );
+                        "
+                        :style="`width: ${dashboardStats.revisionPercentage}%`"
                       ></div>
                     </div>
                   </div>
-                  <!-- Progress glow -->
-                  <div
-                    class="absolute inset-0 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    style="background-color: rgba(220, 38, 38, 0.1)"
-                  ></div>
                 </div>
               </div>
 
@@ -1193,7 +1004,7 @@
   /* Enhanced Multi-Layer Card Effects */
   .multi-layer-card {
     position: relative;
-    height: 220px;
+    height: 190px;
     cursor: pointer;
     transform-style: preserve-3d;
     perspective: 1000px;

@@ -271,16 +271,16 @@ class DivisionalCombinedAccessController extends Controller
 
             DB::commit();
             
-            // Send SMS notifications if approved
-            if ($validatedData['divisional_status'] === 'approved') {
-                try {
+            // Send SMS notifications based on status
+            try {
+                $sms = app(SmsModule::class);
+                
+                if ($validatedData['divisional_status'] === 'approved') {
                     // Get next approver (ICT Director)
                     $nextApprover = User::whereHas('roles', fn($q) => 
                         $q->where('name', 'ict_director')
                     )->first();
                     
-                    // Send SMS notifications
-                    $sms = app(SmsModule::class);
                     $sms->notifyRequestApproved(
                         $userAccessRequest,
                         auth()->user(),
@@ -288,16 +288,28 @@ class DivisionalCombinedAccessController extends Controller
                         $nextApprover
                     );
                     
-                    Log::info('Divisional SMS notifications sent', [
+                    Log::info('Divisional approval SMS notifications sent', [
                         'request_id' => $id,
                         'next_approver' => $nextApprover ? $nextApprover->name : 'None'
                     ]);
-                } catch (\Exception $e) {
-                    Log::warning('Divisional SMS notification failed', [
-                        'request_id' => $id,
-                        'error' => $e->getMessage()
+                } elseif ($validatedData['divisional_status'] === 'rejected') {
+                    // Send rejection SMS to staff
+                    $sms->notifyRequestRejected(
+                        $userAccessRequest,
+                        auth()->user(),
+                        'divisional',
+                        $validatedData['divisional_comments'] ?? null
+                    );
+                    
+                    Log::info('Divisional rejection SMS notification sent', [
+                        'request_id' => $id
                     ]);
                 }
+            } catch (\Exception $e) {
+                Log::warning('Divisional SMS notification failed', [
+                    'request_id' => $id,
+                    'error' => $e->getMessage()
+                ]);
             }
 
             Log::info('Divisional Combined Access: Approval updated successfully', [
@@ -356,6 +368,25 @@ class DivisionalCombinedAccessController extends Controller
             ]);
 
             DB::commit();
+
+            // Send SMS notification to requester about cancellation
+            try {
+                $sms = app(SmsModule::class);
+                $sms->notifyRequestCancelled(
+                    $userAccessRequest,
+                    auth()->user(),
+                    $validatedData['reason']
+                );
+                
+                Log::info('Divisional cancellation SMS notification sent', [
+                    'request_id' => $id
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('Divisional cancellation SMS notification failed', [
+                    'request_id' => $id,
+                    'error' => $e->getMessage()
+                ]);
+            }
 
             Log::info('Divisional Combined Access: Request cancelled successfully', [
                 'request_id' => $id
@@ -507,6 +538,13 @@ class DivisionalCombinedAccessController extends Controller
             'divisional_name' => $request->divisional_name ?? '',
             'divisional_approved_at' => $request->divisional_approved_at,
             
+            // Cancellation metadata for UI logic
+            'cancellation_reason' => $request->cancellation_reason,
+            'cancelled_by' => $request->cancelled_by,
+            'cancelled_at' => $request->cancelled_at,
+            'cancelled_by_name' => $request->cancelled_by ? (\App\Models\User::find($request->cancelled_by)?->name ?? 'System') : null,
+            'cancelled_by_role' => $request->cancelled_by ? (\App\Models\User::find($request->cancelled_by)?->roles->first()?->name ?? null) : null,
+
             // Approval workflow status
             'hod_approval_status' => $this->getApprovalStatus($request, 'hod'),
             'divisional_approval_status' => $this->getApprovalStatus($request, 'divisional'),
@@ -661,6 +699,8 @@ class DivisionalCombinedAccessController extends Controller
                     // Cancellation/rejection info
                     'cancelled_at' => $request->cancelled_at,
                     'cancelled_by' => $request->cancelled_by,
+                    'cancelled_by_name' => $request->cancelled_by ? (\App\Models\User::find($request->cancelled_by)?->name ?? 'System') : null,
+                    'cancelled_by_role' => $request->cancelled_by ? (\App\Models\User::find($request->cancelled_by)?->roles->first()?->name ?? null) : null,
                     'cancellation_reason' => $request->cancellation_reason,
                     
                     // Timestamps

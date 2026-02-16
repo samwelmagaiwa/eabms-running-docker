@@ -891,13 +891,19 @@
 
         // 8. Final Status (if cancelled)
         if (request.cancelled_at) {
+          // Use actual canceller's name and role from backend
+          const cancelledByName = request.cancelled_by_name || request.cancelled_by || 'System'
+          const cancelledByRole = request.cancelled_by_role
+            ? this.formatRoleName(request.cancelled_by_role)
+            : 'System'
+
           steps.push({
             id: 'cancellation',
             title: 'Request Cancelled',
             status: 'rejected',
             statusLabel: 'Cancelled',
-            actor: request.cancelled_by || 'System',
-            position: 'Administrator',
+            actor: cancelledByName,
+            position: cancelledByRole,
             timestamp: request.cancelled_at,
             comments: request.cancellation_reason
           })
@@ -1327,15 +1333,10 @@
         }
       },
 
-      formatDateTime(dateTime) {
-        if (!dateTime) return 'N/A'
-
+      formatDateTime(dateString) {
+        if (!dateString) return '—'
         try {
-          const date = new Date(dateTime)
-          // Check if date is valid
-          if (isNaN(date.getTime()) || date.getFullYear() < 2020 || date.getFullYear() > 2030) {
-            return 'Invalid Date'
-          }
+          const date = new Date(dateString)
           return date.toLocaleString('en-US', {
             year: 'numeric',
             month: 'short',
@@ -1343,9 +1344,22 @@
             hour: '2-digit',
             minute: '2-digit'
           })
-        } catch (error) {
-          return 'Invalid Date'
+        } catch (e) {
+          return dateString
         }
+      },
+
+      formatRoleName(role) {
+        const roleMap = {
+          head_of_department: 'Head of Department',
+          divisional_director: 'Divisional Director',
+          ict_director: 'ICT Director',
+          head_of_it: 'Head of IT',
+          ict_officer: 'ICT Officer',
+          admin: 'Administrator',
+          staff: 'Staff'
+        }
+        return roleMap[role] || role
       }
     }
   }

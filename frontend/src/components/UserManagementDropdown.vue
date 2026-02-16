@@ -1,6 +1,6 @@
 <template>
   <div
-    class="medical-card bg-gradient-to-r from-blue-600/25 to-cyan-600/25 border-2 border-blue-400/40 rounded-2xl backdrop-blur-sm hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-500 group overflow-hidden"
+    class="medical-card bg-gradient-to-r from-blue-600/25 to-cyan-600/25 border-2 border-blue-400/40 rounded-2xl backdrop-blur-sm hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-500 group"
   >
     <!-- Enhanced Header Section -->
     <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-6 header-shadow">
@@ -141,9 +141,13 @@
                 @change="handleFilter"
               >
                 <option value="" class="bg-gray-800 text-white">All Status</option>
-                <option value="active" class="bg-gray-800 text-white">Active</option>
-                <option value="inactive" class="bg-gray-800 text-white">Inactive</option>
+                <option value="active" class="bg-gray-800 text-white">
+                  Active (Non-Cancelled)
+                </option>
                 <option value="pending" class="bg-gray-800 text-white">Pending</option>
+                <option value="completed" class="bg-gray-800 text-white">Completed</option>
+                <option value="rejected" class="bg-gray-800 text-white">Rejected</option>
+                <option value="cancelled" class="bg-gray-800 text-white">Cancelled</option>
               </select>
               <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
                 <i class="fas fa-chevron-down text-blue-300 text-sm drop-shadow-sm"></i>
@@ -207,10 +211,10 @@
 
         <!-- Enhanced Tables Section -->
         <div
-          class="bg-white/10 rounded-2xl border-2 border-blue-300/30 overflow-hidden backdrop-blur-sm shadow-2xl"
+          class="bg-white/10 rounded-2xl border-2 border-blue-300/30 backdrop-blur-sm shadow-2xl overflow-visible"
         >
           <!-- Jeeva Users Table -->
-          <div v-if="activeTab === 'jeeva'" class="min-h-96">
+          <div v-if="activeTab === 'jeeva'" class="min-h-96 overflow-visible">
             <DataTable
               title="Jeeva System Users"
               :columns="jeevaColumns"
@@ -218,11 +222,52 @@
               :loading="loading"
               :total="totals.jeeva"
               @paginate="onPaginate('jeeva', $event)"
-            />
+            >
+              <template #actions="{ row }">
+                <div
+                  class="relative flex justify-center items-center"
+                  :class="{ 'z-[100]': activeActionRowId === row.id }"
+                >
+                  <button
+                    @click.stop="toggleActionMenu(row.id)"
+                    class="p-2 text-blue-300 hover:text-white hover:bg-white/20 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    title="Actions"
+                  >
+                    <i class="fas fa-ellipsis-v"></i>
+                  </button>
+
+                  <!-- Dropdown Menu - positioned above and to the left -->
+                  <div
+                    v-if="activeActionRowId === row.id"
+                    class="absolute right-full mr-2 top-0 w-52 bg-slate-900/95 border border-blue-400/30 rounded-xl shadow-2xl backdrop-blur-md z-[100] py-1 action-dropdown"
+                  >
+                    <button
+                      @click="handleAction('download', row)"
+                      class="w-full text-left px-4 py-3 text-sm text-blue-100 hover:bg-blue-600/40 hover:text-white transition-colors flex items-center group/item"
+                    >
+                      <i
+                        class="fas fa-file-pdf mr-3 text-blue-400 group-hover/item:scale-110 transition-transform"
+                      ></i>
+                      <span>Download PDF</span>
+                    </button>
+                    <div class="h-px bg-white/10 mx-2"></div>
+                    <button
+                      @click="handleAction('delete', row)"
+                      class="w-full text-left px-4 py-3 text-sm text-red-300 hover:bg-red-600/40 hover:text-white transition-colors flex items-center group/item"
+                    >
+                      <i
+                        class="fas fa-trash-alt mr-3 text-red-500 group-hover/item:scale-110 transition-transform"
+                      ></i>
+                      <span>Delete Request</span>
+                    </button>
+                  </div>
+                </div>
+              </template>
+            </DataTable>
           </div>
 
           <!-- Wellsoft Users Table -->
-          <div v-if="activeTab === 'wellsoft'" class="min-h-96">
+          <div v-if="activeTab === 'wellsoft'" class="min-h-96 overflow-visible">
             <DataTable
               title="Wellsoft System Users"
               :columns="wellsoftColumns"
@@ -230,11 +275,52 @@
               :loading="loading"
               :total="totals.wellsoft"
               @paginate="onPaginate('wellsoft', $event)"
-            />
+            >
+              <template #actions="{ row }">
+                <div
+                  class="relative flex justify-center items-center"
+                  :class="{ 'z-[100]': activeActionRowId === row.id }"
+                >
+                  <button
+                    @click.stop="toggleActionMenu(row.id)"
+                    class="p-2 text-blue-300 hover:text-white hover:bg-white/20 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    title="Actions"
+                  >
+                    <i class="fas fa-ellipsis-v"></i>
+                  </button>
+
+                  <!-- Dropdown Menu - positioned to the left -->
+                  <div
+                    v-if="activeActionRowId === row.id"
+                    class="absolute right-full mr-2 top-0 w-52 bg-slate-900/95 border border-blue-400/30 rounded-xl shadow-2xl backdrop-blur-md z-[100] py-1 action-dropdown"
+                  >
+                    <button
+                      @click="handleAction('download', row)"
+                      class="w-full text-left px-4 py-3 text-sm text-blue-100 hover:bg-blue-600/40 hover:text-white transition-colors flex items-center group/item"
+                    >
+                      <i
+                        class="fas fa-file-pdf mr-3 text-blue-400 group-hover/item:scale-110 transition-transform"
+                      ></i>
+                      <span>Download PDF</span>
+                    </button>
+                    <div class="h-px bg-white/10 mx-2"></div>
+                    <button
+                      @click="handleAction('delete', row)"
+                      class="w-full text-left px-4 py-3 text-sm text-red-300 hover:bg-red-600/40 hover:text-white transition-colors flex items-center group/item"
+                    >
+                      <i
+                        class="fas fa-trash-alt mr-3 text-red-500 group-hover/item:scale-110 transition-transform"
+                      ></i>
+                      <span>Delete Request</span>
+                    </button>
+                  </div>
+                </div>
+              </template>
+            </DataTable>
           </div>
 
           <!-- Internet Users Table -->
-          <div v-if="activeTab === 'internet'" class="min-h-96">
+          <div v-if="activeTab === 'internet'" class="min-h-96 overflow-visible">
             <DataTable
               title="Internet Access Users"
               :columns="internetColumns"
@@ -242,7 +328,48 @@
               :loading="loading"
               :total="totals.internet"
               @paginate="onPaginate('internet', $event)"
-            />
+            >
+              <template #actions="{ row }">
+                <div
+                  class="relative flex justify-center items-center"
+                  :class="{ 'z-[100]': activeActionRowId === row.id }"
+                >
+                  <button
+                    @click.stop="toggleActionMenu(row.id)"
+                    class="p-2 text-blue-300 hover:text-white hover:bg-white/20 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    title="Actions"
+                  >
+                    <i class="fas fa-ellipsis-v"></i>
+                  </button>
+
+                  <!-- Dropdown Menu - positioned to the left -->
+                  <div
+                    v-if="activeActionRowId === row.id"
+                    class="absolute right-full mr-2 top-0 w-52 bg-slate-900/95 border border-blue-400/30 rounded-xl shadow-2xl backdrop-blur-md z-[100] py-1 action-dropdown"
+                  >
+                    <button
+                      @click="handleAction('download', row)"
+                      class="w-full text-left px-4 py-3 text-sm text-blue-100 hover:bg-blue-600/40 hover:text-white transition-colors flex items-center group/item"
+                    >
+                      <i
+                        class="fas fa-file-pdf mr-3 text-blue-400 group-hover/item:scale-110 transition-transform"
+                      ></i>
+                      <span>Download PDF</span>
+                    </button>
+                    <div class="h-px bg-white/10 mx-2"></div>
+                    <button
+                      @click="handleAction('delete', row)"
+                      class="w-full text-left px-4 py-3 text-sm text-red-300 hover:bg-red-600/40 hover:text-white transition-colors flex items-center group/item"
+                    >
+                      <i
+                        class="fas fa-trash-alt mr-3 text-red-500 group-hover/item:scale-110 transition-transform"
+                      ></i>
+                      <span>Delete Request</span>
+                    </button>
+                  </div>
+                </div>
+              </template>
+            </DataTable>
           </div>
         </div>
       </div>
@@ -251,9 +378,16 @@
 </template>
 
 <script>
-  import { fetchJeevaUsers, fetchWellsoftUsers, fetchInternetUsers } from '@/utils/api'
+  import {
+    fetchJeevaUsers,
+    fetchWellsoftUsers,
+    fetchInternetUsers,
+    deleteUserAccess,
+    downloadUserAccessPdf
+  } from '@/utils/api'
   import DataTable from './tables/DataTable.vue'
   import OrbitingDots from '@/components/common/OrbitingDots.vue'
+  import Swal from 'sweetalert2'
 
   export default {
     name: 'UserManagementDropdown',
@@ -272,6 +406,7 @@
         exporting: false,
         searchQuery: '',
         filterStatus: '',
+        activeActionRowId: null,
         pagination: {
           jeeva: { page: 1, perPage: 10 },
           wellsoft: { page: 1, perPage: 10 },
@@ -317,7 +452,8 @@
           { key: 'ict_director_name', label: 'Director ICT' },
           { key: 'head_it_name', label: 'HOD(IT)' },
           { key: 'ict_officer_name', label: 'ICT OFFICER' },
-          { key: 'status', label: 'Status', slot: 'status' }
+          { key: 'status', label: 'Status', slot: 'status' },
+          { key: 'actions', label: 'Action' }
         ],
         wellsoftColumns: [
           { key: 'requestNumber', label: 'Request ID' },
@@ -345,7 +481,8 @@
           { key: 'ict_director_name', label: 'Director ICT' },
           { key: 'head_it_name', label: 'HOD(IT)' },
           { key: 'ict_officer_name', label: 'ICT OFFICER' },
-          { key: 'status', label: 'Status', slot: 'status' }
+          { key: 'status', label: 'Status', slot: 'status' },
+          { key: 'actions', label: 'Action' }
         ],
         internetColumns: [
           { key: 'requestNumber', label: 'Request ID' },
@@ -367,7 +504,8 @@
           { key: 'ict_director_name', label: 'Director ICT' },
           { key: 'head_it_name', label: 'HOD(IT)' },
           { key: 'ict_officer_name', label: 'ICT OFFICER' },
-          { key: 'status', label: 'Status', slot: 'status' }
+          { key: 'status', label: 'Status', slot: 'status' },
+          { key: 'actions', label: 'Action' }
         ]
       }
     },
@@ -505,6 +643,9 @@
         return col.format ? col.format(value) : value
       },
       async loadData() {
+        // Prevent duplicate calls while loading
+        if (this.loading) return
+
         try {
           this.loading = true
           const { page, perPage } = this.pagination[this.activeTab]
@@ -529,6 +670,11 @@
             this.totals.internet = res.total || this.internetUsers.length
           }
         } catch (e) {
+          // Ignore abort errors (these happen when requests are cancelled)
+          if (e.message === 'Request aborted' || e.message?.includes('aborted')) {
+            console.log('Request was aborted, ignoring')
+            return
+          }
           console.error('Failed to load users', e)
           // Set some dummy data for demonstration
           this.totals = { jeeva: 0, wellsoft: 0, internet: 0 }
@@ -540,15 +686,105 @@
         this.pagination[type] = { page, perPage }
         this.activeTab = type
         this.loadData()
+      },
+      toggleActionMenu(rowId) {
+        if (this.activeActionRowId === rowId) {
+          this.activeActionRowId = null
+        } else {
+          this.activeActionRowId = rowId
+        }
+      },
+      closeActionMenu() {
+        this.activeActionRowId = null
+      },
+      handleAction(action, row) {
+        if (action === 'download') {
+          this.downloadPdf(row)
+        } else if (action === 'delete') {
+          this.confirmDelete(row)
+        }
+        this.closeActionMenu()
+      },
+      async confirmDelete(row) {
+        const result = await Swal.fire({
+          title: 'Are you sure?',
+          text: `You are about to delete the request for ${row.staffName || row.employeeFullName}. This action cannot be undone.`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#d33',
+          cancelButtonColor: '#3085d6',
+          confirmButtonText: 'Yes, delete it!',
+          background: '#1e293b',
+          color: '#ffffff'
+        })
+
+        if (result.isConfirmed) {
+          try {
+            this.loading = true
+            const res = await deleteUserAccess(row.id)
+            if (res.success) {
+              Swal.fire({
+                title: 'Deleted!',
+                text: 'The request has been deleted.',
+                icon: 'success',
+                background: '#1e293b',
+                color: '#ffffff'
+              })
+              this.loadData()
+            } else {
+              throw new Error(res.message)
+            }
+          } catch (error) {
+            Swal.fire({
+              title: 'Error!',
+              text: error.message || 'Failed to delete the request.',
+              icon: 'error',
+              background: '#1e293b',
+              color: '#ffffff'
+            })
+          } finally {
+            this.loading = false
+          }
+        }
+      },
+      async downloadPdf(row) {
+        try {
+          this.loading = true
+          const res = await downloadUserAccessPdf(row.id)
+          if (!res.success) {
+            throw new Error(res.message)
+          }
+        } catch (error) {
+          console.error('Failed to download PDF:', error)
+          Swal.fire({
+            title: 'Error!',
+            text: error.message || 'Failed to download PDF.',
+            icon: 'error',
+            background: '#1e293b',
+            color: '#ffffff'
+          })
+        } finally {
+          this.loading = false
+        }
       }
     },
     mounted() {
       this.open = this.defaultOpen
-      if (this.open) this.loadData()
+      // Load data only here, not in watch, to prevent race condition
+      if (this.open) {
+        this.$nextTick(() => {
+          this.loadData()
+        })
+      }
+      window.addEventListener('click', this.closeActionMenu)
+    },
+    beforeUnmount() {
+      window.removeEventListener('click', this.closeActionMenu)
     },
     watch: {
-      open(val) {
-        if (val) this.loadData()
+      open(val, oldVal) {
+        // Only load data when open changes from false to true (not on initial mount)
+        if (val && oldVal === false) this.loadData()
       }
     }
   }
@@ -558,7 +794,6 @@
   /* Medical Glass morphism effects */
   .medical-card {
     position: relative;
-    overflow: hidden;
     background: rgba(59, 130, 246, 0.1);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
@@ -615,5 +850,21 @@
       0 0 0 2px rgba(255, 255, 255, 0.1),
       inset 0 2px 4px rgba(255, 255, 255, 0.25),
       inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .action-dropdown {
+    animation: slideLeft 0.2s ease-out;
+    transform-origin: top right;
+  }
+
+  @keyframes slideLeft {
+    from {
+      opacity: 0;
+      transform: scale(0.95) translateX(10px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateX(0);
+    }
   }
 </style>

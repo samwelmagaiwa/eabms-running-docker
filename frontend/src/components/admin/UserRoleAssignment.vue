@@ -672,7 +672,8 @@
                         ? 'border-red-400/70 focus:border-red-400'
                         : 'border-blue-300/30 focus:border-blue-400'
                     ]"
-                    placeholder="Enter PF number"
+                    placeholder="Enter PF number (e.g., 1290)"
+                    @blur="newUser.pf_number = normalizePfNumber(newUser.pf_number)"
                     required
                   />
                   <p
@@ -960,7 +961,8 @@
                         ? 'border-red-400/70 focus:border-red-400'
                         : 'border-blue-300/30 focus:border-blue-400'
                     ]"
-                    placeholder="Enter PF number (optional)"
+                    placeholder="Enter PF number (e.g., 1290)"
+                    @blur="editUserData.pf_number = normalizePfNumber(editUserData.pf_number)"
                   />
                   <p
                     v-if="editUserFormErrors.pf_number"
@@ -2520,23 +2522,7 @@
         editingUser.value = user
         editUserFormErrors.value = {}
 
-        // Populate the form with current user data
-        editUserData.value = {
-          name: user.name || '',
-          email: user.email || '',
-          phone: normalizePhoneNumber(user.phone || ''),
-          pf_number: user.pf_number || '',
-          password: '',
-          password_confirmation: '',
-          // Prefer nested department id if present, fallback to flat field
-          department_id:
-            user.department && user.department.id ? user.department.id : user.department_id || '',
-          // Prefer first role id if present
-          primary_role: user.roles && user.roles.length > 0 ? user.roles[0].id : '',
-          is_active: user.is_active !== undefined ? user.is_active : true
-        }
-
-        // Load form data (departments and roles)
+        // Load form data (departments and roles) FIRST before populating form
         try {
           const [departmentsResponse, rolesResponse] = await Promise.all([
             adminUserService.getDepartments(),
@@ -2548,6 +2534,64 @@
         } catch (error) {
           console.error('Error loading form data:', error)
           showErrorMessage('Failed to load form data')
+        }
+
+        // Get the department_id - prefer nested department.id, fallback to flat field
+        let deptId = ''
+        if (user.department && user.department.id) {
+          deptId = user.department.id
+        } else if (user.department_id) {
+          deptId = user.department_id
+        }
+        // Ensure it matches option values (convert to number if needed)
+        if (deptId && availableDepartments.value.length > 0) {
+          const matchingDept = availableDepartments.value.find(
+            (d) => String(d.id) === String(deptId)
+          )
+          if (matchingDept) {
+            deptId = matchingDept.id // Use the exact type from the options
+          }
+        }
+
+        // Get the primary role - use first role if present
+        let roleId = ''
+        if (user.roles && user.roles.length > 0) {
+          const userRoleId = user.roles[0].id
+          // Ensure it matches option values
+          if (availableRoles.value.length > 0) {
+            const matchingRole = availableRoles.value.find(
+              (r) => String(r.id) === String(userRoleId)
+            )
+            if (matchingRole) {
+              roleId = matchingRole.id // Use the exact type from the options
+            }
+          }
+        }
+
+        // Populate the form with current user data AFTER options are loaded
+        editUserData.value = {
+          name: user.name || '',
+          email: user.email || '',
+          phone: normalizePhoneNumber(user.phone || ''),
+          pf_number: normalizePfNumber(user.pf_number || ''),
+          password: '',
+          password_confirmation: '',
+          department_id: deptId,
+          primary_role: roleId,
+          is_active: user.is_active !== undefined ? user.is_active : true
+        }
+
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Edit user modal opened:', {
+            user_name: user.name,
+            user_department: user.department,
+            user_department_id: user.department_id,
+            form_department_id: deptId,
+            user_roles: user.roles,
+            form_primary_role: roleId,
+            available_departments: availableDepartments.value.length,
+            available_roles: availableRoles.value.length
+          })
         }
       }
 
@@ -2797,7 +2841,7 @@
             name: newUser.value.name.trim(),
             email: newUser.value.email.trim().toLowerCase(),
             phone: normalizePhoneNumber(newUser.value.phone.trim()),
-            pf_number: newUser.value.pf_number.trim(),
+            pf_number: normalizePfNumber(newUser.value.pf_number),
             password: newUser.value.password,
             password_confirmation: newUser.value.password_confirmation,
             department_id: newUser.value.department_id || null,
@@ -2932,7 +2976,7 @@
             name: editUserData.value.name.trim(),
             email: editUserData.value.email.trim().toLowerCase(),
             phone: normalizePhoneNumber(editUserData.value.phone.trim()),
-            pf_number: editUserData.value.pf_number.trim() || null,
+            pf_number: normalizePfNumber(editUserData.value.pf_number) || null,
             department_id: editUserData.value.department_id || null,
             is_active: editUserData.value.is_active
           }
@@ -2951,14 +2995,14 @@
           const response = await adminUserService.updateUser(editingUser.value.id, userData)
 
           if (response.success) {
-            // Patch local user to reflect department and other changes immediately
+            // Patch local user to reflect department, roles and other changes immediately
             const idx = users.value.findIndex((u) => u.id === editingUser.value.id)
             if (idx !== -1) {
               const updated = { ...users.value[idx] }
               updated.name = editUserData.value.name
               updated.email = editUserData.value.email
               updated.phone = normalizePhoneNumber(editUserData.value.phone)
-              updated.pf_number = editUserData.value.pf_number
+              updated.pf_number = normalizePfNumber(editUserData.value.pf_number)
               updated.is_active = editUserData.value.is_active
               updated.department_id = editUserData.value.department_id || null
 
@@ -2976,6 +3020,25 @@
                 }
               } else {
                 updated.department = null
+              }
+
+              // Update roles from backend response if available, otherwise patch locally
+              if (response.data?.user?.roles) {
+                updated.roles = response.data.user.roles
+              } else if (editUserData.value.primary_role) {
+                // Fallback: patch roles locally based on selected primary_role
+                const selectedRole = availableRoles.value.find(
+                  (r) => String(r.id) === String(editUserData.value.primary_role)
+                )
+                if (selectedRole) {
+                  updated.roles = [
+                    {
+                      id: selectedRole.id,
+                      name: selectedRole.name,
+                      display_name: selectedRole.display_name || selectedRole.name
+                    }
+                  ]
+                }
               }
 
               users.value.splice(idx, 1, updated)
@@ -3045,6 +3108,23 @@
         return v
       }
 
+      /**
+       * Normalize PF number by removing any "PF" prefix (case-insensitive)
+       * so users can enter "PF1290", "pf1290", "PF 1290", or just "1290"
+       * and it will always store as just "1290"
+       */
+      const normalizePfNumber = (input) => {
+        if (!input) return ''
+        let v = String(input).trim()
+        // Remove spaces, dashes, colons
+        v = v.replace(/[\s\-:]/g, '')
+        // Remove "PF" prefix (case-insensitive) if present
+        v = v.replace(/^pf/i, '')
+        // Remove any remaining leading/trailing whitespace
+        v = v.trim()
+        return v
+      }
+
       const validateCreateUserForm = () => {
         const errors = {}
         if (!newUser.value.name || !newUser.value.name.trim()) {
@@ -3064,6 +3144,8 @@
           const phoneOk = /^\+255\d{9}$/.test(newUser.value.phone)
           if (!phoneOk) errors.phone = 'Phone must be in the format +255XXXXXXXXX.'
         }
+        // normalize PF number to remove any "PF" prefix
+        newUser.value.pf_number = normalizePfNumber(newUser.value.pf_number)
         if (!newUser.value.pf_number || !newUser.value.pf_number.trim()) {
           errors.pf_number = 'PF number is required.'
         }
@@ -3625,6 +3707,7 @@
         getInitials,
         getRoleColorClasses,
         normalizePhoneNumber,
+        normalizePfNumber,
         fetchRoles,
         fetchDepartments,
         openAssignRolesDialog,

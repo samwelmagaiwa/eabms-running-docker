@@ -464,10 +464,12 @@ class AdminUserController extends Controller
             'name' => 'sometimes|required|string|max:255',
             'email' => ['sometimes', 'required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($userId)],
             'phone' => 'nullable|string|max:20',
-            'pf_number' => ['sometimes', 'required', 'string', 'max:50', Rule::unique('users')->ignore($userId)],
+            'pf_number' => ['nullable', 'string', 'max:50', Rule::unique('users')->ignore($userId)],
             'department_id' => 'nullable|exists:departments,id',
             'password' => 'nullable|string|min:8|confirmed',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
+            'role_ids' => 'sometimes|array',
+            'role_ids.*' => 'exists:roles,id'
         ]);
 
         if ($validator->fails()) {
@@ -476,6 +478,25 @@ class AdminUserController extends Controller
                 'message' => 'Validation failed',
                 'errors' => $validator->errors()
             ], 422);
+        }
+
+        // Additional validation for privilege escalation
+        $currentUser = $request->user();
+        $roleIds = $request->input('role_ids', []);
+
+        if (!empty($roleIds) && !$currentUser->isAdmin() && !$currentUser->hasRole('super_admin')) {
+            $adminRoles = Role::whereIn('name', ['admin', 'super_admin'])->pluck('id')->toArray();
+            $hasAdminRole = !empty(array_intersect($roleIds, $adminRoles));
+            
+            if ($hasAdminRole) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => [
+                        'role_ids' => ['You cannot assign admin roles.']
+                    ]
+                ], 422);
+            }
         }
 
         DB::beginTransaction();
@@ -488,6 +509,69 @@ class AdminUserController extends Controller
             }
 
             $user->update($updateData);
+
+            // Handle role updates if role_ids is provided
+            if ($request->has('role_ids')) {
+                $newRoleIds = $request->input('role_ids', []);
+                $currentRoleIds = $user->roles()->pluck('roles.id')->toArray();
+
+                // Determine roles to remove and roles to add
+                $rolesToRemove = array_diff($currentRoleIds, $newRoleIds);
+                $rolesToAdd = array_diff($newRoleIds, $currentRoleIds);
+
+                // Log role removals
+                foreach ($rolesToRemove as $roleId) {
+                    \App\Models\RoleChangeLog::create([
+                        'user_id' => $user->id,
+                        'role_id' => $roleId,
+                        'action' => 'removed',
+                        'changed_by' => $request->user()->id,
+                        'changed_at' => now(),
+                        'metadata' => [
+                            'user_email' => $user->email,
+                            'changed_by_email' => $request->user()->email,
+                            'context' => 'user_update'
+                        ]
+                    ]);
+                }
+
+                // Detach removed roles
+                if (!empty($rolesToRemove)) {
+                    $user->roles()->detach($rolesToRemove);
+                }
+
+                // Attach new roles with metadata
+                foreach ($rolesToAdd as $roleId) {
+                    $user->roles()->attach($roleId, [
+                        'assigned_at' => now(),
+                        'assigned_by' => $request->user()->id,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                    // Log role assignment
+                    \App\Models\RoleChangeLog::create([
+                        'user_id' => $user->id,
+                        'role_id' => $roleId,
+                        'action' => 'assigned',
+                        'changed_by' => $request->user()->id,
+                        'changed_at' => now(),
+                        'metadata' => [
+                            'user_email' => $user->email,
+                            'changed_by_email' => $request->user()->email,
+                            'context' => 'user_update'
+                        ]
+                    ]);
+                }
+
+                Log::info('User roles updated by admin', [
+                    'admin_id' => $request->user()->id,
+                    'user_id' => $user->id,
+                    'roles_removed' => $rolesToRemove,
+                    'roles_added' => $rolesToAdd,
+                    'new_roles' => $newRoleIds
+                ]);
+            }
 
             // If the user was active and has just been locked (is_active explicitly set to false),
             // revoke all active Sanctum tokens so they are logged out from all sessions.
@@ -511,7 +595,8 @@ class AdminUserController extends Controller
             Log::info('User updated by admin', [
                 'admin_id' => $request->user()->id,
                 'user_id' => $user->id,
-                'updated_fields' => array_keys($updateData)
+                'updated_fields' => array_keys($updateData),
+                'roles_updated' => $request->has('role_ids')
             ]);
 
             // Load relationships for response
@@ -534,7 +619,14 @@ class AdminUserController extends Controller
                             'display_name' => $user->department->getFullNameAttribute()
                         ] : null,
                         'is_active' => $user->is_active,
-                        'roles' => $user->roles,
+                        'roles' => $user->roles->map(function ($role) {
+                            return [
+                                'id' => $role->id,
+                                'name' => $role->name,
+                                'display_name' => $role->getDisplayName(),
+                                'assigned_at' => $role->pivot->assigned_at,
+                            ];
+                        }),
                         'display_roles' => $user->getDisplayRoleNames(),
                         'updated_at' => $user->updated_at
                     ]

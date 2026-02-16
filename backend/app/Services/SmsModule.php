@@ -44,8 +44,14 @@ class SmsModule
 
     /**
      * Send SMS to a single recipient
+     * 
+     * @param string $phoneNumber
+     * @param string $message
+     * @param string $type
+     * @param int|null $referenceId - ID of the related model (e.g., UserAccess, BookingService)
+     * @param string|null $referenceType - Class name of the related model
      */
-    public function sendSms(string $phoneNumber, string $message, string $type = 'notification'): array
+    public function sendSms(string $phoneNumber, string $message, string $type = 'notification', ?int $referenceId = null, ?string $referenceType = null): array
     {
         try {
             // In test mode, simulate success (do not block flows or mark as failed)
@@ -53,13 +59,15 @@ class SmsModule
                 Log::info('SMS TEST MODE: would send SMS', [
                     'phone' => $phoneNumber,
                     'message_preview' => substr($message, 0, 50),
-                    'type' => $type
+                    'type' => $type,
+                    'reference_id' => $referenceId,
+                    'reference_type' => $referenceType
                 ]);
                 // Still log a synthetic SMS entry for traceability
                 $this->logSms($this->formatPhoneNumber($phoneNumber), $message, $type, true, [
                     'success' => true,
                     'message' => 'SMS sent (test mode)'
-                ]);
+                ], $referenceId, $referenceType);
                 return $this->buildResponse(true, 'SMS sent successfully (test mode)', ['test_mode' => true]);
             }
 
@@ -68,13 +76,15 @@ class SmsModule
                 Log::info('SMS disabled - skipping send', [
                     'phone' => $phoneNumber,
                     'message_preview' => substr($message, 0, 50),
-                    'type' => $type
+                    'type' => $type,
+                    'reference_id' => $referenceId,
+                    'reference_type' => $referenceType
                 ]);
                 // Log as informational without error state
                 $this->logSms($this->formatPhoneNumber($phoneNumber), $message, $type, true, [
                     'success' => true,
                     'message' => 'SMS skipped (service disabled)'
-                ]);
+                ], $referenceId, $referenceType);
                 return $this->buildResponse(true, 'SMS skipped (service disabled)', ['disabled' => true]);
             }
 
@@ -92,8 +102,8 @@ class SmsModule
             // Send via API
             $response = $this->sendViaApi($phoneNumber, $message);
 
-            // Log the attempt
-            $this->logSms($phoneNumber, $message, $type, $response['success'], $response);
+            // Log the attempt with reference info for delivery report tracking
+            $this->logSms($phoneNumber, $message, $type, $response['success'], $response, $referenceId, $referenceType);
 
             return $response;
 
@@ -189,14 +199,14 @@ class SmsModule
 
     /**
      * Notify ICT Officer about task assignment
-     * Similar to notifyRequestApproved but specifically for ICT Officer assignment
+     * Also notifies the staff that their request is being processed
      */
     public function notifyIctOfficerAssignment($request, User $ictOfficer, User $assignedBy): array
     {
-        $results = ['ict_officer_notified' => false];
+        $results = ['ict_officer_notified' => false, 'requester_notified' => false];
 
         try {
-            // Notify ICT Officer about assignment
+            // 1. Notify ICT Officer about assignment
             if ($ictOfficer->phone) {
                 $requesterName = $request->staff_name ?? $request->full_name ?? 'Staff';
                 $department = 'N/A';
@@ -211,7 +221,8 @@ class SmsModule
                 $accessText = ($types === 'Access') ? $types : "{$types} access";
                 $message = "NEW TASK ASSIGNMENT: You have been assigned to implement {$accessText} for {$requesterName} ({$department}). Ref: {$ref}. Please login to system to start implementation. - EABMS";
                 
-                $result = $this->sendSms($ictOfficer->phone, $message, 'ict_officer_assignment');
+                // Send SMS with reference for delivery tracking
+                $result = $this->sendSms($ictOfficer->phone, $message, 'ict_officer_assignment', $request->id, get_class($request));
                 $results['ict_officer_notified'] = $result['success'];
                 
                 // Update SMS status tracking for ICT Officer
@@ -233,7 +244,10 @@ class SmsModule
                 ]);
             }
 
-            Log::info('ICT Officer assignment SMS notification sent', [
+            // 2. Notify the staff (requester) that their request is being processed
+            $results['requester_notified'] = $this->notifyRequesterAssigned($request, $ictOfficer);
+
+            Log::info('ICT Officer assignment SMS notifications sent', [
                 'request_id' => $request->id,
                 'ict_officer_id' => $ictOfficer->id,
                 'results' => $results
@@ -248,6 +262,235 @@ class SmsModule
         }
 
         return $results;
+    }
+
+    /**
+     * Notify requester that their request has been assigned to an ICT Officer for implementation
+     */
+    protected function notifyRequesterAssigned($request, User $ictOfficer): bool
+    {
+        // Get phone number
+        $phone = null;
+        
+        if (!empty($request->phone)) {
+            $phone = $request->phone;
+        } elseif (!empty($request->phone_number)) {
+            $phone = $request->phone_number;
+        } elseif (isset($request->user) && !empty($request->user->phone)) {
+            $phone = $request->user->phone;
+        }
+        
+        if (!$phone) {
+            Log::warning('No phone number for requester (assignment notification)', [
+                'request_id' => $request->id,
+                'user_id' => $request->user_id ?? null
+            ]);
+            return false;
+        }
+
+        // Get requester name
+        $name = $request->staff_name ?? $request->full_name ?? $request->user->name ?? 'User';
+
+        // Get request types
+        $types = $this->getRequestTypes($request);
+
+        // Get reference
+        $ref = $request->request_id ?? 'MLG-REQ' . str_pad($request->id, 6, '0', STR_PAD_LEFT);
+
+        // Build message
+        $message = "Dear {$name}, your {$types} request (Ref: {$ref}) has been FULLY APPROVED and assigned to ICT for implementation. You will be notified once completed. - EABMS";
+
+        // Send SMS with reference for delivery tracking
+        $result = $this->sendSms($phone, $message, 'assignment_notification', $request->id, get_class($request));
+        return $result['success'];
+    }
+
+    /**
+     * Notify requester when their request is rejected
+     * 
+     * @param mixed $request - The access request object
+     * @param User $rejectedBy - Who rejected the request
+     * @param string $approvalLevel - 'hod', 'divisional', 'ict_director', 'head_it'
+     * @param string|null $reason - Reason for rejection
+     */
+    public function notifyRequestRejected($request, User $rejectedBy, string $approvalLevel, ?string $reason = null): array
+    {
+        $results = ['requester_notified' => false];
+
+        try {
+            // Get requester phone number
+            $phone = null;
+            
+            if (!empty($request->phone)) {
+                $phone = $request->phone;
+            } elseif (!empty($request->phone_number)) {
+                $phone = $request->phone_number;
+            } elseif (isset($request->user) && !empty($request->user->phone)) {
+                $phone = $request->user->phone;
+            }
+            
+            if (!$phone) {
+                Log::warning('No phone number for requester (rejection notification)', [
+                    'request_id' => $request->id,
+                    'user_id' => $request->user_id ?? null
+                ]);
+                return $results;
+            }
+
+            // Get requester name
+            $name = $request->staff_name ?? $request->full_name ?? $request->user->name ?? 'User';
+
+            // Get request types
+            $types = $this->getRequestTypes($request);
+
+            // Get reference
+            $ref = $request->request_id ?? 'MLG-REQ' . str_pad($request->id, 6, '0', STR_PAD_LEFT);
+
+            // Get approver level name
+            $levelName = $this->getApprovalLevelName($approvalLevel);
+
+            // Build message
+            $message = "Dear {$name}, your {$types} request (Ref: {$ref}) has been REJECTED by {$levelName}.";
+            
+            if ($reason && trim($reason) !== '') {
+                $shortReason = strlen($reason) > 50 ? substr($reason, 0, 47) . '...' : $reason;
+                $message .= " Reason: {$shortReason}";
+            }
+            
+            $message .= " Please contact your HOD for guidance. - EABMS";
+
+            // Send SMS with reference for delivery tracking
+            $result = $this->sendSms($phone, $message, 'rejection', $request->id, get_class($request));
+            $results['requester_notified'] = (bool) ($result['success'] ?? false);
+
+            Log::info('Request rejection SMS notification sent', [
+                'request_id' => $request->id,
+                'rejected_by' => $rejectedBy->id,
+                'level' => $approvalLevel,
+                'results' => $results
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('Failed to send rejection notification', [
+                'request_id' => $request->id ?? null,
+                'rejected_by' => $rejectedBy->id ?? null,
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        return $results;
+    }
+
+    /**
+     * Notify requester when their request is cancelled
+     * 
+     * @param mixed $request - The access request object
+     * @param User $cancelledBy - Who cancelled the request
+     * @param string $reason - Reason for cancellation
+     */
+    public function notifyRequestCancelled($request, User $cancelledBy, string $reason): array
+    {
+        $results = ['requester_notified' => false];
+
+        try {
+            // Get requester phone number
+            $phone = null;
+            
+            if (!empty($request->phone)) {
+                $phone = $request->phone;
+            } elseif (!empty($request->phone_number)) {
+                $phone = $request->phone_number;
+            } elseif (isset($request->user) && !empty($request->user->phone)) {
+                $phone = $request->user->phone;
+            }
+            
+            if (!$phone) {
+                Log::warning('No phone number for requester (cancellation notification)', [
+                    'request_id' => $request->id,
+                    'user_id' => $request->user_id ?? null
+                ]);
+                return $results;
+            }
+
+            // Get requester name
+            $name = $request->staff_name ?? $request->full_name ?? $request->user->name ?? 'User';
+
+            // Get request types
+            $types = $this->getRequestTypes($request);
+
+            // Get reference
+            $ref = $request->request_id ?? 'MLG-REQ' . str_pad($request->id, 6, '0', STR_PAD_LEFT);
+
+            // Get canceller's role for display
+            $cancellerRole = $this->getUserRoleDisplay($cancelledBy);
+
+            // Build message - keep it concise for SMS
+            $shortReason = strlen($reason) > 50 ? substr($reason, 0, 47) . '...' : $reason;
+            $message = "Dear {$name}, your {$types} request (Ref: {$ref}) has been CANCELLED by {$cancellerRole}. Reason: {$shortReason} - EABMS";
+
+            // Send SMS with reference for delivery tracking
+            $result = $this->sendSms($phone, $message, 'cancellation', $request->id, get_class($request));
+            $results['requester_notified'] = (bool) ($result['success'] ?? false);
+
+            Log::info('Request cancellation SMS notification sent', [
+                'request_id' => $request->id,
+                'cancelled_by' => $cancelledBy->id,
+                'results' => $results
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('Failed to send cancellation notification', [
+                'request_id' => $request->id ?? null,
+                'cancelled_by' => $cancelledBy->id ?? null,
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        return $results;
+    }
+
+    /**
+     * Get user's role for display in SMS
+     */
+    protected function getUserRoleDisplay(User $user): string
+    {
+        // Try to get from roles relationship
+        if ($user->relationLoaded('roles') && $user->roles->isNotEmpty()) {
+            $roleName = $user->roles->first()->name;
+            return $this->formatRoleName($roleName);
+        }
+        
+        // Try to load roles
+        try {
+            $user->load('roles');
+            if ($user->roles->isNotEmpty()) {
+                $roleName = $user->roles->first()->name;
+                return $this->formatRoleName($roleName);
+            }
+        } catch (Exception $e) {
+            // Ignore
+        }
+        
+        return $user->name;
+    }
+
+    /**
+     * Format role name for display
+     */
+    protected function formatRoleName(string $role): string
+    {
+        $roleMap = [
+            'admin' => 'Admin',
+            'head_of_department' => 'HOD',
+            'divisional_director' => 'Divisional Director',
+            'ict_director' => 'ICT Director',
+            'head_of_it' => 'Head of IT',
+            'ict_officer' => 'ICT Officer',
+            'staff' => 'Staff',
+            'secretary_ict' => 'ICT Secretary'
+        ];
+        
+        return $roleMap[$role] ?? ucwords(str_replace('_', ' ', $role));
     }
 
     /**
@@ -312,8 +555,8 @@ class SmsModule
 
             $message .= " - EABMS";
 
-            // Send SMS
-            $result = $this->sendSms($phone, $message, 'access_granted');
+            // Send SMS with reference for delivery tracking
+            $result = $this->sendSms($phone, $message, 'access_granted', $request->id, get_class($request));
             $results['requester_notified'] = (bool) ($result['success'] ?? false);
 
             // IMPORTANT: log the concrete failure reason (otherwise we only see requester_notified=false)
@@ -409,8 +652,8 @@ class SmsModule
         $levelName = $this->getApprovalLevelName($approvalLevel);
         $message = "Dear {$name}, your {$types} request has been APPROVED by {$levelName}. Reference: {$ref}. You will be notified on next steps. - EABMS";
 
-        // Send SMS
-        $result = $this->sendSms($phone, $message, 'approval');
+        // Send SMS with reference for delivery tracking
+        $result = $this->sendSms($phone, $message, 'approval', $request->id, get_class($request));
         return $result['success'];
     }
 
@@ -456,8 +699,8 @@ class SmsModule
         // Build message
         $message = "PENDING APPROVAL: {$types} request from {$requesterName} ({$department}) requires your review. Ref: {$ref}. Please check the system. - EABMS";
 
-        // Send SMS
-        $result = $this->sendSms($nextApprover->phone, $message, 'approval_notification');
+        // Send SMS with reference for delivery tracking
+        $result = $this->sendSms($nextApprover->phone, $message, 'approval_notification', $request->id, get_class($request));
         return $result['success'];
     }
 
@@ -712,8 +955,16 @@ class SmsModule
 
     /**
      * Log SMS attempt to database
+     * 
+     * @param string $phoneNumber
+     * @param string $message
+     * @param string $type
+     * @param bool $success
+     * @param array $response
+     * @param int|null $referenceId - ID of the related model for delivery report tracking
+     * @param string|null $referenceType - Class name of the related model
      */
-    protected function logSms(string $phoneNumber, string $message, string $type, bool $success, array $response): void
+    protected function logSms(string $phoneNumber, string $message, string $type, bool $success, array $response, ?int $referenceId = null, ?string $referenceType = null): void
     {
         try {
             // Store provider response as structured JSON (not JSON-encoded string)
@@ -723,7 +974,17 @@ class SmsModule
                 'type' => $type,
                 'status' => $success ? 'sent' : 'failed',
                 'provider_response' => $response,
-                'sent_at' => $success ? now() : null
+                'sent_at' => $success ? now() : null,
+                'reference_id' => $referenceId,
+                'reference_type' => $referenceType
+            ]);
+            
+            Log::debug('SMS logged with reference', [
+                'phone' => substr($phoneNumber, 0, 6) . '***',
+                'type' => $type,
+                'success' => $success,
+                'reference_id' => $referenceId,
+                'reference_type' => $referenceType
             ]);
         } catch (Exception $e) {
             Log::error('Failed to log SMS', ['error' => $e->getMessage()]);

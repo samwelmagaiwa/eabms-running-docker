@@ -925,20 +925,25 @@ class UserAccessController extends Controller
     /**
      * Cancel (soft delete) the specified user access request.
      * Instead of deleting, this sets the status to 'cancelled'
+     * Admins can delete any request, regular users can only delete their own
      */
     public function destroy(UserAccess $userAccess): JsonResponse
     {
         try {
-            // Check if user owns this request
-            if ($userAccess->user_id !== Auth::id()) {
+            $user = Auth::user();
+            $isAdmin = $user->hasAnyRole(['admin', 'super_admin']);
+            
+            // Check if user owns this request OR is an admin
+            if ($userAccess->user_id !== Auth::id() && !$isAdmin) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized access to this request.'
                 ], 403);
             }
 
-            // Check if request can be cancelled (only pending requests)
-            if (!$userAccess->isPending()) {
+            // For non-admins, check if request can be cancelled (only pending requests)
+            // Admins can cancel/delete any request regardless of status
+            if (!$isAdmin && !$userAccess->isPending()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Only pending requests can be cancelled.'
@@ -946,9 +951,10 @@ class UserAccessController extends Controller
             }
 
             // Cancel the request by updating status instead of deleting
+            $cancellationReason = $isAdmin ? 'Deleted by administrator' : 'Cancelled by user';
             $userAccess->update([
                 'hod_status' => 'cancelled',
-                'cancellation_reason' => 'Cancelled by user',
+                'cancellation_reason' => $cancellationReason,
                 'cancelled_by' => Auth::id(),
                 'cancelled_at' => now()
             ]);
@@ -1490,7 +1496,8 @@ class UserAccessController extends Controller
     public function getJeevaUsers(Request $request): JsonResponse
     {
         try {
-            return $this->getFilteredUsers($request, 'jeeva_access', 'Jeeva users');
+            // Handle multiple variations of jeeva request type
+            return $this->getFilteredUsers($request, ['jeeva_access', 'jeeva', 'Jeeva', 'jeeva_access_request'], 'Jeeva users');
         } catch (\Exception $e) {
             Log::error('Error retrieving Jeeva users: ' . $e->getMessage());
             
@@ -1508,7 +1515,8 @@ class UserAccessController extends Controller
     public function getWellsoftUsers(Request $request): JsonResponse
     {
         try {
-            return $this->getFilteredUsers($request, 'wellsoft', 'Wellsoft users');
+            // Handle multiple variations of wellsoft request type
+            return $this->getFilteredUsers($request, ['wellsoft', 'wellsoft_access', 'Wellsoft', 'wellsoft_access_request'], 'Wellsoft users');
         } catch (\Exception $e) {
             Log::error('Error retrieving Wellsoft users: ' . $e->getMessage());
             
@@ -1526,7 +1534,8 @@ class UserAccessController extends Controller
     public function getInternetUsers(Request $request): JsonResponse
     {
         try {
-            return $this->getFilteredUsers($request, 'internet_access_request', 'Internet users');
+            // Handle multiple variations of internet request type
+            return $this->getFilteredUsers($request, ['internet_access_request', 'internet', 'Internet', 'internet_access'], 'Internet users');
         } catch (\Exception $e) {
             Log::error('Error retrieving Internet users: ' . $e->getMessage());
             
@@ -1540,11 +1549,26 @@ class UserAccessController extends Controller
 
     /**
      * Helper method to get filtered users by request type.
+     * @param Request $request
+     * @param string|array $requestTypes - Single type or array of type variations to match
+     * @param string $userTypeName
      */
-    private function getFilteredUsers(Request $request, string $requestType, string $userTypeName): JsonResponse
+    private function getFilteredUsers(Request $request, string|array $requestTypes, string $userTypeName): JsonResponse
     {
-        $query = UserAccess::with(['user', 'department'])
-            ->whereJsonContains('request_type', $requestType);
+        $query = UserAccess::with(['user', 'department']);
+        
+        // Handle single type or array of types
+        $types = is_array($requestTypes) ? $requestTypes : [$requestTypes];
+        
+        // Build query to match any of the request type variations
+        $query->where(function ($q) use ($types) {
+            foreach ($types as $type) {
+                $q->orWhereJsonContains('request_type', $type);
+            }
+        });
+        
+        // Note: We now show ALL records to admin including cancelled ones
+        // The status filter below can be used to filter by specific statuses
 
         // Apply search filter
         if ($request->has('search') && $request->search !== '') {
@@ -1604,6 +1628,18 @@ class UserAccessController extends Controller
                           ->orWhere('head_it_status', 'rejected');
                     });
                     break;
+                case 'cancelled':
+                case 'inactive':
+                    // Show only cancelled/deleted requests
+                    $query->where('hod_status', 'cancelled');
+                    break;
+                case 'active':
+                    // Exclude cancelled requests (show only active ones)
+                    $query->where(function($q) {
+                        $q->whereNull('hod_status')
+                          ->orWhere('hod_status', '!=', 'cancelled');
+                    });
+                    break;
             }
         }
 
@@ -1616,9 +1652,12 @@ class UserAccessController extends Controller
         $perPage = min($request->get('perPage', $request->get('per_page', 15)), 100);
         $users = $query->paginate($perPage);
 
+        // Use the first type for transformation (they're all variations of the same type)
+        $primaryType = is_array($requestTypes) ? $requestTypes[0] : $requestTypes;
+        
         // Transform the data to match the expected format
-        $transformedData = $users->getCollection()->map(function ($userAccess) use ($requestType) {
-            return $this->transformUserAccessData($userAccess, $requestType);
+        $transformedData = $users->getCollection()->map(function ($userAccess) use ($primaryType) {
+            return $this->transformUserAccessData($userAccess, $primaryType);
         });
 
         return response()->json([
@@ -1663,18 +1702,16 @@ class UserAccessController extends Controller
             $data['tempDate'] = null;
         }
 
-        // Add modules based on request type
-        switch ($requestType) {
-            case 'jeeva_access':
-                $data['selectedModules'] = $userAccess->jeeva_modules_selected ?? $userAccess->jeeva_modules ?? [];
-                break;
-            case 'wellsoft':
-                $data['selectedModules'] = $userAccess->wellsoft_modules_selected ?? $userAccess->wellsoft_modules ?? [];
-                break;
-            case 'internet_access_request':
-                $data['internetPurposes'] = $userAccess->internet_purposes ?? $userAccess->purpose ?? [];
-                $data['designation'] = 'Staff'; // Default designation
-                break;
+        // Add modules based on request type (handle variations)
+        $normalizedType = strtolower(str_replace(['_access', '_request', '_access_request'], '', $requestType));
+        
+        if (in_array($normalizedType, ['jeeva'])) {
+            $data['selectedModules'] = $userAccess->jeeva_modules_selected ?? $userAccess->jeeva_modules ?? [];
+        } elseif (in_array($normalizedType, ['wellsoft'])) {
+            $data['selectedModules'] = $userAccess->wellsoft_modules_selected ?? $userAccess->wellsoft_modules ?? [];
+        } elseif (in_array($normalizedType, ['internet'])) {
+            $data['internetPurposes'] = $userAccess->internet_purposes ?? $userAccess->purpose ?? [];
+            $data['designation'] = 'Staff'; // Default designation
         }
 
         // Add approval information
@@ -1718,6 +1755,11 @@ class UserAccessController extends Controller
      */
     private function getDisplayStatus($userAccess): string
     {
+        // Check for cancelled status first
+        if ($userAccess->hod_status === 'cancelled') {
+            return 'Cancelled';
+        }
+        
         if ($userAccess->ict_officer_status === 'implemented') {
             return 'Completed';
         }

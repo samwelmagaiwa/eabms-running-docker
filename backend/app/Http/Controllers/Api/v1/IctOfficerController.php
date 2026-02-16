@@ -1451,6 +1451,8 @@ class IctOfficerController extends Controller
                         // Cancellation/rejection info
                         'cancelled_at' => $request->cancelled_at,
                         'cancelled_by' => $request->cancelled_by,
+                        'cancelled_by_name' => $request->cancelled_by ? (\App\Models\User::find($request->cancelled_by)?->name ?? 'System') : null,
+                        'cancelled_by_role' => $request->cancelled_by ? (\App\Models\User::find($request->cancelled_by)?->roles->first()?->name ?? null) : null,
                         'cancellation_reason' => $request->cancellation_reason,
                         // Timestamps
                         'created_at' => $request->created_at,

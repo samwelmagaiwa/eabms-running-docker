@@ -1,5 +1,7 @@
 <template>
-  <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+  <div
+    class="bg-white rounded-lg border border-gray-200 shadow-sm transition-all duration-300 overflow-visible"
+  >
     <!-- Enhanced Header -->
     <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
       <div class="flex items-center justify-between">
@@ -30,7 +32,7 @@
     </div>
 
     <!-- Enhanced Table Container -->
-    <div class="overflow-x-auto bg-white">
+    <div class="overflow-x-auto overflow-y-visible bg-white">
       <table class="min-w-full divide-y divide-gray-200">
         <!-- Enhanced Header -->
         <thead class="bg-gradient-to-r from-indigo-50 to-blue-50">
@@ -85,31 +87,27 @@
               :key="col.key"
               class="px-6 py-4 text-lg text-gray-700 align-top"
             >
-              <template v-if="col.slot === 'status'">
-                <span
-                  :class="[
-                    'inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold',
-                    row.status === 'Active' || row.status === 'Completed'
-                      ? 'bg-green-100 text-green-800 border border-green-200'
-                      : 'bg-red-100 text-red-800 border border-red-200'
-                  ]"
-                >
+              <slot :name="col.key" :row="row">
+                <template v-if="col.slot === 'status'">
                   <span
-                    class="w-2 h-2 rounded-full mr-2"
-                    :class="
-                      row.status === 'Active' || row.status === 'Completed'
-                        ? 'bg-green-500'
-                        : 'bg-red-500'
-                    "
-                  ></span>
-                  {{ row.status || 'Inactive' }}
-                </span>
-              </template>
-              <template v-else>
-                <div class="max-w-xs truncate" :title="getValue(row, col)">
-                  {{ getValue(row, col) }}
-                </div>
-              </template>
+                    :class="[
+                      'inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold',
+                      getStatusClasses(row.status)
+                    ]"
+                  >
+                    <span
+                      class="w-2 h-2 rounded-full mr-2"
+                      :class="getStatusDotClass(row.status)"
+                    ></span>
+                    {{ row.status || 'Pending' }}
+                  </span>
+                </template>
+                <template v-else>
+                  <div class="max-w-xs truncate" :title="getValue(row, col)">
+                    {{ getValue(row, col) }}
+                  </div>
+                </template>
+              </slot>
             </td>
           </tr>
         </tbody>
@@ -117,7 +115,7 @@
     </div>
 
     <!-- Enhanced Pagination -->
-    <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+    <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 relative z-0">
       <div class="flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0">
         <div class="flex items-center space-x-4">
           <div class="text-lg text-gray-700">
@@ -211,6 +209,34 @@
       getValue(row, col) {
         const raw = col.key.split('.').reduce((acc, k) => (acc ? acc[k] : undefined), row)
         return col.format ? col.format(raw) : raw
+      },
+      // Get status badge classes based on status value
+      getStatusClasses(status) {
+        const statusLower = (status || '').toLowerCase()
+        if (statusLower === 'completed' || statusLower === 'active' || statusLower === 'implemented') {
+          return 'bg-green-100 text-green-800 border border-green-200'
+        } else if (statusLower === 'cancelled' || statusLower === 'inactive') {
+          return 'bg-gray-100 text-gray-800 border border-gray-200'
+        } else if (statusLower === 'rejected') {
+          return 'bg-red-100 text-red-800 border border-red-200'
+        } else if (statusLower.includes('pending')) {
+          return 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+        }
+        return 'bg-blue-100 text-blue-800 border border-blue-200'
+      },
+      // Get status dot color class
+      getStatusDotClass(status) {
+        const statusLower = (status || '').toLowerCase()
+        if (statusLower === 'completed' || statusLower === 'active' || statusLower === 'implemented') {
+          return 'bg-green-500'
+        } else if (statusLower === 'cancelled' || statusLower === 'inactive') {
+          return 'bg-gray-500'
+        } else if (statusLower === 'rejected') {
+          return 'bg-red-500'
+        } else if (statusLower.includes('pending')) {
+          return 'bg-yellow-500'
+        }
+        return 'bg-blue-500'
       }
     },
     watch: {

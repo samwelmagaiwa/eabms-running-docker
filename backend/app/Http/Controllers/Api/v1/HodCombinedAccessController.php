@@ -295,19 +295,17 @@ class HodCombinedAccessController extends Controller
 
             DB::commit();
 
-            // Send SMS notifications if approved
-            if ($validatedData['hod_status'] === 'approved') {
-                try {
+            // Send SMS notifications based on status
+            try {
+                $sms = app(SmsModule::class);
+                
+                if ($validatedData['hod_status'] === 'approved') {
                     // Get next approver (Divisional Director for this specific department)
-                    // IMPORTANT: Divisional directors can oversee multiple departments,
-                    // so we must get the director assigned to THIS request's department
                     $department = $userAccessRequest->department;
                     $nextApprover = $department && $department->divisional_director_id 
                         ? User::find($department->divisional_director_id)
                         : User::whereHas('roles', fn($q) => $q->where('name', 'divisional_director'))->first();
                     
-                    // Send SMS notifications
-                    $sms = app(SmsModule::class);
                     $sms->notifyRequestApproved(
                         $userAccessRequest,
                         auth()->user(),
@@ -315,17 +313,29 @@ class HodCombinedAccessController extends Controller
                         $nextApprover
                     );
                     
-                    Log::info('HOD SMS notifications sent', [
+                    Log::info('HOD approval SMS notifications sent', [
                         'request_id' => $id,
                         'next_approver' => $nextApprover ? $nextApprover->name : 'None'
                     ]);
-                } catch (\Exception $e) {
-                    Log::warning('HOD SMS notification failed', [
-                        'request_id' => $id,
-                        'error' => $e->getMessage()
+                } elseif ($validatedData['hod_status'] === 'rejected') {
+                    // Send rejection SMS to staff
+                    $sms->notifyRequestRejected(
+                        $userAccessRequest,
+                        auth()->user(),
+                        'hod',
+                        $validatedData['hod_comments'] ?? null
+                    );
+                    
+                    Log::info('HOD rejection SMS notification sent', [
+                        'request_id' => $id
                     ]);
-                    // Don't fail the approval if SMS fails
                 }
+            } catch (\Exception $e) {
+                Log::warning('HOD SMS notification failed', [
+                    'request_id' => $id,
+                    'error' => $e->getMessage()
+                ]);
+                // Don't fail the approval if SMS fails
             }
 
             Log::info('HOD Combined Access: Approval updated successfully with module data', [
@@ -388,6 +398,25 @@ class HodCombinedAccessController extends Controller
             ]);
 
             DB::commit();
+
+            // Send SMS notification to requester about cancellation
+            try {
+                $sms = app(SmsModule::class);
+                $sms->notifyRequestCancelled(
+                    $userAccessRequest,
+                    auth()->user(),
+                    $validatedData['reason']
+                );
+                
+                Log::info('HOD cancellation SMS notification sent', [
+                    'request_id' => $id
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('HOD cancellation SMS notification failed', [
+                    'request_id' => $id,
+                    'error' => $e->getMessage()
+                ]);
+            }
 
             Log::info('HOD Combined Access: Request cancelled successfully', [
                 'request_id' => $id
@@ -610,7 +639,11 @@ class HodCombinedAccessController extends Controller
                 'cancellation_reason' => $request->cancellation_reason,
                 'cancelled_by' => $request->cancelled_by,
                 'cancelled_at' => $request->cancelled_at,
-'cancelled_by_user' => ($request->hod_status === 'cancelled') && ((int) $request->cancelled_by === (int) $request->user_id),
+                'cancelled_by_user' => ($request->hod_status === 'cancelled') && ((int) $request->cancelled_by === (int) $request->user_id),
+                
+                // Canceller details: Get name and role of the user who cancelled
+                'cancelled_by_name' => $request->cancelled_by ? (\App\Models\User::find($request->cancelled_by)?->name ?? null) : null,
+                'cancelled_by_role' => $request->cancelled_by ? (\App\Models\User::find($request->cancelled_by)?->roles->first()?->name ?? null) : null,
                 
                 // Approval workflow status
                 'hod_approval_status' => $this->getApprovalStatus($request, 'hod'),
@@ -687,6 +720,11 @@ class HodCombinedAccessController extends Controller
                     'purpose' => $request->purpose,
                     'current_status' => $request->hod_status ?? 'pending',
                     'created_at' => $request->created_at,
+                    'cancelled_at' => $request->cancelled_at,
+                    'cancelled_by' => $request->cancelled_by,
+                    'cancelled_by_name' => $request->cancelled_by ? (\App\Models\User::find($request->cancelled_by)?->name ?? 'System') : null,
+                    'cancelled_by_role' => $request->cancelled_by ? (\App\Models\User::find($request->cancelled_by)?->roles->first()?->name ?? null) : null,
+                    'cancellation_reason' => $request->cancellation_reason,
                 ],
                 'approval_stages' => [],
                 'implementation' => null,
@@ -766,9 +804,13 @@ class HodCombinedAccessController extends Controller
             
             // Cancellation details
             if ($request->hod_status === 'cancelled') {
+                $cancelledByUser = $request->cancelled_by ? \App\Models\User::find($request->cancelled_by) : null;
+                
                 $timeline['cancellation'] = [
                     'cancelled_at' => $request->cancelled_at,
                     'cancelled_by' => $request->cancelled_by ?? 'N/A',
+                    'cancelled_by_name' => $cancelledByUser?->name ?? 'System',
+                    'cancelled_by_role' => $cancelledByUser?->roles->first()?->name ?? null,
                     'cancellation_reason' => $request->cancellation_reason ?? 'No reason provided'
                 ];
             }
