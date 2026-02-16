@@ -1,90 +1,118 @@
 <template>
   <div
-    class="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-[9999] p-4"
+    class="fixed inset-0 bg-gradient-to-br from-slate-900/60 via-blue-900/40 to-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
   >
-    <!-- Main Modal -->
+    <!-- Landscape Modern Card -->
     <div
-      class="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-slate-100 transform transition-all animate-modal-pop"
+      class="bg-white rounded-2xl w-full max-w-4xl overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.25)] border border-white/20 transform transition-all animate-slide-up"
     >
-      <!-- Premium Hero Header -->
-      <div
-        class="relative bg-gradient-to-br from-blue-700 via-blue-800 to-blue-900 p-10 text-center"
-      >
-        <!-- Decoration Circles -->
-        <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16"></div>
-        <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full -ml-12 -mb-12"></div>
-
-        <!-- Animated Icon Container -->
-        <div class="relative inline-block mb-6">
-          <div
-            class="w-20 h-20 bg-gradient-to-tr from-amber-300 to-amber-500 rounded-2xl flex items-center justify-center mx-auto shadow-2xl animate-float"
-          >
-            <i class="fas fa-trophy text-white text-3xl drop-shadow-md"></i>
-          </div>
-          <!-- Sparkles -->
-          <div class="absolute -top-2 -right-2 animate-pulse">
-            <i class="fas fa-sparkles text-amber-300 text-sm"></i>
-          </div>
-        </div>
-
-        <h2 class="text-3xl font-extrabold text-white mb-2 tracking-tight">Congratulations!</h2>
-        <div class="inline-flex items-center px-3 py-1 bg-white/10 rounded-full backdrop-blur-sm">
-          <span class="text-blue-100 text-sm font-semibold uppercase tracking-wider">{{
-            userRoleDisplay
-          }}</span>
-        </div>
-      </div>
-
-      <!-- Content Section -->
-      <div class="p-10 bg-white">
-        <!-- User Info -->
-        <div class="text-center mb-8">
-          <div class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-2">
-            Welcome Aboard
-          </div>
-          <h3 class="text-3xl font-black text-slate-900 mb-4 tracking-tight">
-            {{ userName }}
-          </h3>
-          <p class="text-slate-600 text-base leading-relaxed max-w-sm mx-auto">
-            Your onboarding is now officially complete. You have full access to the portal features.
-          </p>
-        </div>
-
-        <!-- Checklist Cards -->
-        <div class="space-y-3 mb-10">
-          <div
-            v-for="(item, index) in [
-              'Terms of Service Accepted',
-              'ICT Policy Acknowledged',
-              'Declaration Form Submitted'
-            ]"
-            :key="index"
-            class="flex items-center gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100 transition-all hover:bg-slate-100/80 group"
-          >
-            <div
-              class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm transition-transform group-hover:scale-110"
-            >
-              <i class="fas fa-check text-white text-[10px]"></i>
-            </div>
-            <span class="text-slate-700 font-bold text-sm">{{ item }}</span>
-          </div>
-        </div>
-
-        <!-- Primary Action -->
-        <button
-          @click="handleContinue"
-          class="group relative w-full bg-slate-900 hover:bg-blue-600 text-white py-5 px-8 rounded-2xl font-bold text-lg transition-all duration-300 shadow-[0_10px_20px_rgba(15,23,42,0.15)] hover:shadow-[0_15px_30px_rgba(37,99,235,0.3)] active:scale-[0.98] overflow-hidden"
+      <!-- Main Content Grid - Landscape Layout -->
+      <div class="grid md:grid-cols-[1fr_1.2fr] gap-0">
+        <!-- Left Section - Hero with Trophy -->
+        <div
+          class="relative bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 p-8 flex flex-col items-center justify-center text-center overflow-hidden"
         >
-          <div
-            class="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-          ></div>
-          <div class="relative flex items-center justify-center gap-3">
-            <span>Continue to Dashboard</span>
-            <i
-              class="fas fa-chevron-right text-sm transition-transform group-hover:translate-x-1"
-            ></i>
+          <!-- Animated Background Patterns -->
+          <div class="absolute inset-0 opacity-10">
+            <div class="absolute top-0 right-0 w-40 h-40 bg-white rounded-full blur-3xl"></div>
+            <div class="absolute bottom-0 left-0 w-32 h-32 bg-white rounded-full blur-2xl"></div>
           </div>
-        </button>
+
+          <!-- Trophy Icon with Glow -->
+          <div class="relative mb-6">
+            <div
+              class="w-24 h-24 bg-gradient-to-tr from-amber-400 to-yellow-500 rounded-3xl flex items-center justify-center shadow-2xl animate-bounce-gentle relative z-10"
+            >
+              <i class="fas fa-trophy text-white text-4xl drop-shadow-lg"></i>
+            </div>
+            <!-- Glow Effect -->
+            <div
+              class="absolute inset-0 bg-amber-400/40 rounded-3xl blur-xl animate-pulse-glow"
+            ></div>
+            <!-- Sparkles -->
+            <div class="absolute -top-3 -right-3 animate-spin-slow">
+              <i class="fas fa-sparkles text-amber-300 text-xl"></i>
+            </div>
+            <div class="absolute -bottom-2 -left-2 animate-ping">
+              <i class="fas fa-star text-yellow-300 text-sm"></i>
+            </div>
+          </div>
+
+          <!-- Congratulations Text -->
+          <div class="relative z-10">
+            <h2 class="text-4xl font-black text-white mb-4 tracking-tight drop-shadow-lg">
+              Success!
+            </h2>
+            <div
+              class="inline-flex items-center gap-2 px-4 py-2 bg-white/20 rounded-full backdrop-blur-md border border-white/30 mb-4"
+            >
+              <i class="fas fa-shield-check text-white text-sm"></i>
+              <span class="text-white text-sm font-bold uppercase tracking-wider">{{
+                userRoleDisplay
+              }}</span>
+            </div>
+
+            <!-- Welcome Message -->
+            <div class="mt-6 space-y-2">
+              <p class="text-blue-100 text-xs font-semibold uppercase tracking-widest">
+                Welcome Aboard
+              </p>
+              <h3 class="text-2xl font-bold text-white drop-shadow">
+                {{ userName }}
+              </h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Section - Checklist & Action -->
+        <div class="bg-gradient-to-br from-slate-50 to-blue-50/30 p-8 flex flex-col justify-center">
+          <!-- Info Message -->
+          <div class="mb-6">
+            <p class="text-slate-700 text-sm leading-relaxed font-medium">
+              🎉 Your onboarding is
+              <span class="font-bold text-blue-600">officially complete</span>! You now have full
+              access to all portal features.
+            </p>
+          </div>
+
+          <!-- Compact Checklist -->
+          <div class="space-y-2.5 mb-8">
+            <div
+              v-for="(item, index) in [
+                'Terms of Service Accepted',
+                'ICT Policy Acknowledged',
+                'Declaration Form Submitted'
+              ]"
+              :key="index"
+              class="flex items-center gap-3 p-3 rounded-xl bg-white border border-slate-200/60 shadow-sm transition-all hover:shadow-md hover:border-blue-300 group"
+              :style="{ animationDelay: `${index * 100}ms` }"
+            >
+              <div
+                class="w-5 h-5 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm transition-all group-hover:scale-110 group-hover:rotate-12"
+              >
+                <i class="fas fa-check text-white text-[9px]"></i>
+              </div>
+              <span class="text-slate-700 font-semibold text-xs">{{ item }}</span>
+            </div>
+          </div>
+
+          <!-- Action Button -->
+          <button
+            @click="handleContinue"
+            class="group relative w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-4 px-6 rounded-xl font-bold text-base transition-all duration-300 shadow-lg hover:shadow-xl active:scale-[0.98] overflow-hidden"
+          >
+            <!-- Shine Effect -->
+            <div
+              class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"
+            ></div>
+            <div class="relative flex items-center justify-center gap-2.5">
+              <span>Continue to Dashboard</span>
+              <i
+                class="fas fa-arrow-right text-sm transition-transform group-hover:translate-x-1"
+              ></i>
+            </div>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -120,45 +148,86 @@
 </script>
 
 <style scoped>
-  @keyframes modal-pop {
+  /* Slide up animation */
+  @keyframes slide-up {
     0% {
       opacity: 0;
-      transform: scale(0.9) translateY(20px);
+      transform: translateY(30px) scale(0.95);
     }
     100% {
       opacity: 1;
-      transform: scale(1) translateY(0);
+      transform: translateY(0) scale(1);
     }
   }
 
-  .animate-modal-pop {
-    animation: modal-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  .animate-slide-up {
+    animation: slide-up 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   }
 
-  @keyframes float {
+  /* Gentle bounce for trophy */
+  @keyframes bounce-gentle {
     0%,
     100% {
-      transform: translateY(0px) rotate(0deg);
+      transform: translateY(0) rotate(0deg);
     }
     50% {
-      transform: translateY(-8px) rotate(2deg);
+      transform: translateY(-10px) rotate(3deg);
     }
   }
 
-  .animate-float {
-    animation: float 4s ease-in-out infinite;
+  .animate-bounce-gentle {
+    animation: bounce-gentle 3s ease-in-out infinite;
   }
 
-  /* Custom focus ring for the button */
+  /* Pulsing glow effect */
+  @keyframes pulse-glow {
+    0%,
+    100% {
+      opacity: 0.3;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.6;
+      transform: scale(1.1);
+    }
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  /* Slow spin for sparkles */
+  @keyframes spin-slow {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .animate-spin-slow {
+    animation: spin-slow 8s linear infinite;
+  }
+
+  /* Focus styles */
   button:focus-visible {
-    outline: 2px solid #3b82f6;
-    outline-offset: 4px;
+    outline: 3px solid #60a5fa;
+    outline-offset: 3px;
   }
 
-  /* Responsive refinements */
-  @media (max-width: 640px) {
-    .p-10 {
+  /* Mobile responsive adjustments */
+  @media (max-width: 768px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+
+    .p-8 {
       padding: 1.5rem;
+    }
+
+    h2 {
+      font-size: 2rem;
     }
 
     h3 {
