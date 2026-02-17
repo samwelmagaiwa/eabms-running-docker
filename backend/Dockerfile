@@ -86,6 +86,10 @@ COPY --from=frontend-builder /app/dist ./public
 COPY --from=builder /usr/local/lib/php/extensions /usr/local/lib/php/extensions
 COPY --from=builder /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
 
+# Copy entrypoint script
+COPY backend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # Create system directories
 RUN mkdir -p /var/www/storage/framework/cache/data \
     /var/www/storage/framework/sessions \
@@ -97,8 +101,8 @@ RUN mkdir -p /var/www/storage/framework/cache/data \
 # Set permissions
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
-# Switch to non-root user
-USER www-data
+# Set entrypoint
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 EXPOSE 9000
 

@@ -568,54 +568,155 @@ class UserAccessController extends Controller
                     if ($ictDirectors->count() > 0) {
                         $message = "PENDING APPROVAL: {$requestType} request from {$userAccess->staff_name} requires your review. Ref: {$requestId}. Please check the system. - EABMS";
                         $result = $sms->sendBulkSms($ictDirectors->toArray(), $message, 'pending_notification');
-                        $sent = ($result['sent'] ?? 0) > 0;
+                        
+                        // Check if SMS was actually sent or just skipped
+                        $actualSent = ($result['sent'] ?? 0) > 0;
+                        $smsStatus = 'failed';
+                        $smsSentAt = null;
+                        
+                        if ($actualSent) {
+                            // Check the status from the result data
+                            $smsStatus = $result['data']['status_to_use'] ?? 'sent';
+                            $smsSentAt = ($result['data']['actually_sent'] ?? true) ? now() : null;
+                        } elseif (isset($result['data']['disabled']) && $result['data']['disabled']) {
+                            $smsStatus = 'disabled';
+                        } elseif (isset($result['data']['test_mode']) && $result['data']['test_mode']) {
+                            $smsStatus = 'test_mode';
+                        }
+                        
                         DB::table('user_access')
                             ->where('id', $userAccess->id)
                             ->update([
-                                'sms_sent_to_ict_director_at' => $sent ? now() : null,
-                                'sms_to_ict_director_status' => $sent ? 'sent' : 'failed',
+                                'sms_sent_to_ict_director_at' => $smsSentAt,
+                                'sms_to_ict_director_status' => $smsStatus,
                                 'updated_at' => now()
                             ]);
                         Log::info('Initial SMS to ICT Director(s) processed', [
                             'request_id' => $userAccess->id,
                             'recipients' => $ictDirectors->count(),
-                            'sent' => $sent
+                            'actual_sent' => $actualSent,
+                            'status_set' => $smsStatus
                         ]);
                     }
                 } else {
                     // Normal staff flow: notify HOD of the department
-                    $hod = User::whereHas('departmentsAsHOD', function($q) use ($userAccess) {
-                        $q->where('departments.id', $userAccess->department_id);
-                    })->first();
+                    // First try to get HOD via department relationship (more reliable)
+                    $department = Department::with('hod')->find($userAccess->department_id);
+                    $hod = $department?->hod;
+                    
+                    // Fallback: try the reverse relationship query if hod relation didn't work
+                    if (!$hod) {
+                        $hod = User::whereHas('departmentsAsHOD', function($q) use ($userAccess) {
+                            $q->where('id', $userAccess->department_id);
+                        })->first();
+                    }
+                    
+                    Log::info('HOD lookup for SMS notification', [
+                        'request_id' => $userAccess->id,
+                        'department_id' => $userAccess->department_id,
+                        'department_name' => $department?->name,
+                        'department_hod_user_id' => $department?->hod_user_id,
+                        'hod_found' => !is_null($hod),
+                        'hod_id' => $hod?->id,
+                        'hod_name' => $hod?->name,
+                        'hod_phone' => $hod?->phone ? substr($hod->phone, 0, 6) . '***' : null
+                    ]);
 
                     if ($hod && $hod->phone) {
                         $message = "PENDING APPROVAL: {$requestType} request from {$userAccess->staff_name} requires your review. Ref: {$requestId}. Please check the system. - EABMS";
-                        $smsResult = $sms->sendSms($hod->phone, $message, 'pending_notification');
+                        $smsResult = $sms->sendSms($hod->phone, $message, 'pending_notification', $userAccess->id, get_class($userAccess));
+                        
+                        // Determine the correct SMS status based on what actually happened:
+                        // - 'sent' = SMS was actually sent to provider and accepted
+                        // - 'disabled' = SMS service is disabled, nothing was sent
+                        // - 'test_mode' = SMS is in test mode, nothing was sent
+                        // - 'failed' = SMS sending failed
+                        $smsStatus = 'failed';
+                        $smsSentAt = null;
+                        if ($smsResult['success']) {
+                            // Check the status_to_use field to know what actually happened
+                            $smsStatus = $smsResult['data']['status_to_use'] ?? 'sent';
+                            // Only set sent_at if SMS was actually sent
+                            $smsSentAt = ($smsResult['data']['actually_sent'] ?? false) ? now() : null;
+                        }
+                        
                         DB::table('user_access')
                             ->where('id', $userAccess->id)
                             ->update([
-                                'sms_sent_to_hod_at' => $smsResult['success'] ? now() : null,
-                                'sms_to_hod_status' => $smsResult['success'] ? 'sent' : 'failed',
+                                'sms_sent_to_hod_at' => $smsSentAt,
+                                'sms_to_hod_status' => $smsStatus,
                                 'updated_at' => now()
                             ]);
+                        
+                        Log::info('SMS to HOD result', [
+                            'request_id' => $userAccess->id,
+                            'hod_id' => $hod->id,
+                            'success' => $smsResult['success'],
+                            'actually_sent' => $smsResult['data']['actually_sent'] ?? false,
+                            'status_set' => $smsStatus,
+                            'message' => $smsResult['message'] ?? 'No message'
+                        ]);
+                    } else {
+                        // HOD not found or no phone - update status to indicate failure
+                        $failReason = !$hod ? 'no_hod_assigned' : 'no_phone_number';
+                        DB::table('user_access')
+                            ->where('id', $userAccess->id)
+                            ->update([
+                                'sms_sent_to_hod_at' => null,
+                                'sms_to_hod_status' => 'failed',
+                                'updated_at' => now()
+                            ]);
+                        
+                        Log::warning('Cannot send SMS to HOD', [
+                            'request_id' => $userAccess->id,
+                            'department_id' => $userAccess->department_id,
+                            'reason' => $failReason,
+                            'hod_found' => !is_null($hod),
+                            'hod_has_phone' => $hod?->phone ? true : false
+                        ]);
                     }
                 }
             } catch (\Exception $e) {
-                Log::warning('Failed to process initial SMS', [
+                Log::error('Failed to process initial SMS', [
                     'error' => $e->getMessage(),
-                    'request_id' => $userAccess->id
+                    'request_id' => $userAccess->id,
+                    'trace' => $e->getTraceAsString()
                 ]);
+                
+                // CRITICAL: Update SMS status to 'failed' even when exception occurs
+                // Otherwise the default 'pending' status will be misleading
+                try {
+                    DB::table('user_access')
+                        ->where('id', $userAccess->id)
+                        ->update([
+                            'sms_sent_to_hod_at' => null,
+                            'sms_to_hod_status' => 'failed',
+                            'updated_at' => now()
+                        ]);
+                } catch (\Exception $dbEx) {
+                    Log::error('Failed to update SMS status after exception', [
+                        'error' => $dbEx->getMessage(),
+                        'request_id' => $userAccess->id
+                    ]);
+                }
             }
 
             DB::commit();
             
             // Send database notification to HOD AFTER commit (non-critical)
             try {
-                $hod = User::whereHas('departmentsAsHOD', function($q) use ($userAccess) {
-                    $q->where('departments.id', $userAccess->department_id);
-                })->first();
+                // Use the same reliable HOD lookup as SMS notification
+                $deptForNotif = Department::with('hod')->find($userAccess->department_id);
+                $hodForNotif = $deptForNotif?->hod;
                 
-                if ($hod) {
+                // Fallback: try the reverse relationship query
+                if (!$hodForNotif) {
+                    $hodForNotif = User::whereHas('departmentsAsHOD', function($q) use ($userAccess) {
+                        $q->where('id', $userAccess->department_id);
+                    })->first();
+                }
+                
+                if ($hodForNotif) {
                     // Determine request type - handle all variations
                     $types = [];
                     if (in_array('jeeva_access_request', $selectedServices) || in_array('jeeva_access', $selectedServices) || in_array('jeeva', $selectedServices)) $types[] = 'Jeeva';
@@ -624,34 +725,34 @@ class UserAccessController extends Controller
                     $requestType = implode(' & ', $types) ?: 'Access';
                     
                     $requestId = 'MLG-REQ' . str_pad($userAccess->id, 6, '0', STR_PAD_LEFT);
-                    $department = $userAccess->department->name ?? 'Unknown';
+                    $departmentName = $userAccess->department->name ?? 'Unknown';
                     
                     DB::table('notifications')->insert([
-                        'recipient_id' => $hod->id,
+                        'recipient_id' => $hodForNotif->id,
                         'sender_id' => $userAccess->user_id,
                         'access_request_id' => $userAccess->id,
                         'type' => 'new_access_request',
                         'title' => 'New Access Request',
-                        'message' => "New {$requestType} request from {$userAccess->staff_name} ({$department})",
+                        'message' => "New {$requestType} request from {$userAccess->staff_name} ({$departmentName})",
                         'data' => json_encode([
                             'request_id' => $userAccess->id,
                             'request_number' => $requestId,
                             'staff_name' => $userAccess->staff_name,
-                            'department' => $department,
+                            'department' => $departmentName,
                             'request_type' => $requestType,
                             'status' => 'pending',
                             'action_url' => "/hod/combined-access-requests/{$userAccess->id}",
                         ]),
                         'read_at' => null,
                         'notifiable_type' => 'App\\Models\\User',
-                        'notifiable_id' => $hod->id,
+                        'notifiable_id' => $hodForNotif->id,
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
                     
                     Log::info('Database notification sent to HOD', [
-                        'hod_id' => $hod->id,
-                        'hod_name' => $hod->name,
+                        'hod_id' => $hodForNotif->id,
+                        'hod_name' => $hodForNotif->name,
                         'request_id' => $userAccess->id
                     ]);
                 }
@@ -951,27 +1052,25 @@ class UserAccessController extends Controller
             }
 
             // Cancel the request by updating status instead of deleting
-            $cancellationReason = $isAdmin ? 'Deleted by administrator' : 'Cancelled by user';
-            $userAccess->update([
-                'hod_status' => 'cancelled',
-                'cancellation_reason' => $cancellationReason,
-                'cancelled_by' => Auth::id(),
-                'cancelled_at' => now()
-            ]);
+            // Perform hard delete
+            // Note: Related models (wellsoft_modules_selected, jeeva_modules_selected, ict_task_assignments)
+            // will be deleted via database cascade constraints.
+            // Signatures are NOT deleted here to avoid ID collision with BookingService signatures (shared table, no discriminator).
+            $userAccess->delete();
 
-            Log::info("User access request cancelled", [
+            Log::info("User access request deleted permanently", [
                 'user_id' => Auth::id(),
                 'request_id' => $userAccess->id,
-                'cancelled_at' => now()
+                'deleted_at' => now()
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'User access request cancelled successfully.',
+                'message' => 'User access request deleted permanently.',
                 'data' => [
                     'id' => $userAccess->id,
-                    'status' => 'cancelled',
-                    'cancelled_at' => now()
+                    'status' => 'deleted',
+                    'deleted_at' => now()
                 ]
             ]);
 
@@ -1555,7 +1654,7 @@ class UserAccessController extends Controller
      */
     private function getFilteredUsers(Request $request, string|array $requestTypes, string $userTypeName): JsonResponse
     {
-        $query = UserAccess::with(['user', 'department']);
+        $query = UserAccess::with(['user', 'department', 'signatures']);
         
         // Handle single type or array of types
         $types = is_array($requestTypes) ? $requestTypes : [$requestTypes];
@@ -1684,7 +1783,7 @@ class UserAccessController extends Controller
             'employeeFullName' => $userAccess->staff_name, // Alias for internet users
             'phoneNumber' => $userAccess->phone_number,
             'department' => $userAccess->department ? $userAccess->department->name : 'N/A',
-            'signature' => $userAccess->signature_path ? 'Available' : 'N/A',
+            'signature' => ($userAccess->signature_path || $userAccess->signatures->isNotEmpty()) ? 'Available' : 'N/A',
             'date' => $userAccess->created_at ? $userAccess->created_at->format('Y-m-d') : 'N/A',
             'requestType' => $requestType,
             'accessType' => $userAccess->access_type ?? 'permanent',

@@ -58,6 +58,15 @@ class Department extends Model
     }
 
     /**
+     * Alias for headOfDepartment relationship.
+     * Get the head of department user (HOD).
+     */
+    public function hod()
+    {
+        return $this->belongsTo(User::class, 'hod_user_id');
+    }
+
+    /**
      * Get the divisional director user.
      */
     public function divisionalDirector()

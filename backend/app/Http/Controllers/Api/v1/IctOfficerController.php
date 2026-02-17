@@ -324,6 +324,27 @@ class IctOfficerController extends Controller
 
             DB::commit();
 
+            // Send SMS notification to requester that their access is now active
+            try {
+                $smsModule = app(\App\Services\SmsModule::class);
+                $results = $smsModule->notifyAccessGranted(
+                    $assignment->userAccess,
+                    $user,
+                    $request->completion_notes
+                );
+                
+                Log::info('Access granted SMS notification sent', [
+                    'user_access_id' => $assignment->user_access_id,
+                    'requester_notified' => $results['requester_notified'] ?? false
+                ]);
+            } catch (\Exception $smsError) {
+                Log::warning('Failed to send access granted SMS notification', [
+                    'user_access_id' => $assignment->user_access_id,
+                    'error' => $smsError->getMessage()
+                ]);
+                // Don't fail the completion if SMS fails
+            }
+
             Log::info('IctOfficerController: Task completed successfully', [
                 'user_id' => $user->id,
                 'assignment_id' => $assignmentId

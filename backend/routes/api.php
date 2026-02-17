@@ -237,8 +237,10 @@ Route::match(['GET', 'POST'], '/sms/delivery-report', function (Request $request
 
                     // Determine which SMS status field to update based on message type
                     switch ($smsLog->type) {
+                        case 'pending_notification':
                         case 'approval_notification':
-                            // SMS sent to approvers (HOD, Divisional, etc.)
+                            // SMS sent to approvers (HOD, Divisional, ICT Director, Head IT)
+                            // Check each approver status in order of workflow
                             if (($accessRequest->sms_to_hod_status ?? null) === 'sent') {
                                 $updateFields['sms_to_hod_status'] = $newStatus;
                             } elseif (($accessRequest->sms_to_divisional_status ?? null) === 'sent') {
@@ -259,6 +261,7 @@ Route::match(['GET', 'POST'], '/sms/delivery-report', function (Request $request
                         case 'assignment_notification':
                         case 'cancellation':
                         case 'rejection':
+                        case 'notification':
                             // SMS sent to requester
                             if (($accessRequest->sms_to_requester_status ?? null) === 'sent') {
                                 $updateFields['sms_to_requester_status'] = $newStatus;

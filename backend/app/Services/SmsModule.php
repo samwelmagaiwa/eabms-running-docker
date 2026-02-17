@@ -54,7 +54,7 @@ class SmsModule
     public function sendSms(string $phoneNumber, string $message, string $type = 'notification', ?int $referenceId = null, ?string $referenceType = null): array
     {
         try {
-            // In test mode, simulate success (do not block flows or mark as failed)
+            // In test mode, simulate success but indicate it wasn't actually sent
             if ($this->testMode) {
                 Log::info('SMS TEST MODE: would send SMS', [
                     'phone' => $phoneNumber,
@@ -66,12 +66,18 @@ class SmsModule
                 // Still log a synthetic SMS entry for traceability
                 $this->logSms($this->formatPhoneNumber($phoneNumber), $message, $type, true, [
                     'success' => true,
-                    'message' => 'SMS sent (test mode)'
+                    'message' => 'SMS sent (test mode)',
+                    'test_mode' => true
                 ], $referenceId, $referenceType);
-                return $this->buildResponse(true, 'SMS sent successfully (test mode)', ['test_mode' => true]);
+                // Return success but with 'actually_sent' = false so caller knows to use appropriate status
+                return $this->buildResponse(true, 'SMS sent successfully (test mode)', [
+                    'test_mode' => true,
+                    'actually_sent' => false,
+                    'status_to_use' => 'test_mode'
+                ]);
             }
 
-            // If service is disabled, do not treat as an error (avoid marking as failed in DB)
+            // If service is disabled, indicate it wasn't sent
             if (!$this->enabled) {
                 Log::info('SMS disabled - skipping send', [
                     'phone' => $phoneNumber,
@@ -83,9 +89,15 @@ class SmsModule
                 // Log as informational without error state
                 $this->logSms($this->formatPhoneNumber($phoneNumber), $message, $type, true, [
                     'success' => true,
-                    'message' => 'SMS skipped (service disabled)'
+                    'message' => 'SMS skipped (service disabled)',
+                    'disabled' => true
                 ], $referenceId, $referenceType);
-                return $this->buildResponse(true, 'SMS skipped (service disabled)', ['disabled' => true]);
+                // Return success but with 'actually_sent' = false so caller knows to use appropriate status
+                return $this->buildResponse(true, 'SMS skipped (service disabled)', [
+                    'disabled' => true,
+                    'actually_sent' => false,
+                    'status_to_use' => 'disabled'
+                ]);
             }
 
             // Format and validate phone number
@@ -749,11 +761,20 @@ class SmsModule
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $curlError = curl_error($ch);
+            $curlErrno = curl_errno($ch);
             curl_close($ch);
 
             // Handle cURL errors
             if ($curlError) {
-                Log::error('SMS cURL Error', ['error' => $curlError]);
+                Log::error('SMS cURL Error', [
+                    'error' => $curlError,
+                    'curl_errno' => $curlErrno,
+                    'api_url' => $this->apiUrl,
+                    'phone' => substr($phoneNumber, 0, 6) . '***',
+                    'timeout' => $this->timeout,
+                    'verify_ssl' => $this->verifySsl,
+                    'sender_id' => $this->senderId
+                ]);
                 return $this->buildResponse(false, 'Connection error: ' . $curlError);
             }
 
@@ -799,6 +820,9 @@ class SmsModule
                     'message' => $data['message'] ?? null,
                     'valid_contacts' => $validCount,
                 ]);
+                // Include 'actually_sent' => true to indicate SMS was really sent to provider
+                $data['actually_sent'] = true;
+                $data['status_to_use'] = 'sent';
                 return $this->buildResponse(true, 'SMS sent successfully', $data);
             }
 
@@ -861,16 +885,42 @@ class SmsModule
             return '255' . substr($phoneNumber, 1);
         }
         
+        // 9 digits starting with 8 (e.g., 812345678) - TTCL
+        if (strlen($phoneNumber) === 9 && substr($phoneNumber, 0, 1) === '8') {
+            return '255' . $phoneNumber;
+        }
+        
+        // 10 digits starting with 08 (e.g., 0812345678) - TTCL
+        if (strlen($phoneNumber) === 10 && substr($phoneNumber, 0, 2) === '08') {
+            return '255' . substr($phoneNumber, 1);
+        }
+        
+        // 9 digits starting with 9 (e.g., 912345678) - Smile, other
+        if (strlen($phoneNumber) === 9 && substr($phoneNumber, 0, 1) === '9') {
+            return '255' . $phoneNumber;
+        }
+        
+        // 10 digits starting with 09 (e.g., 0912345678) - Smile, other
+        if (strlen($phoneNumber) === 10 && substr($phoneNumber, 0, 2) === '09') {
+            return '255' . substr($phoneNumber, 1);
+        }
+        
         // If doesn't match any pattern, return as-is
         return $phoneNumber;
     }
 
     /**
      * Validate Tanzanian phone number
+     * Supports all Tanzanian mobile prefixes:
+     * - 2556x (Vodacom, Airtel)
+     * - 2557x (Tigo, Halotel, TTCL)
+     * - 2558x (TTCL additional)
+     * - 2559x (Smile, other operators)
      */
     protected function isValidPhoneNumber(string $phoneNumber): bool
     {
-        return preg_match('/^255[67][0-9]{8}$/', $phoneNumber);
+        // Accept Tanzanian numbers: 255 + (6|7|8|9) + 8 digits = 12 total digits
+        return preg_match('/^255[6-9][0-9]{8}$/', $phoneNumber);
     }
 
     /**

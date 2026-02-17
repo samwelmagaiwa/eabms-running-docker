@@ -59,6 +59,8 @@ services:
       - ./backend/storage:/var/www/storage
       - ./backend/bootstrap/cache:/var/www/bootstrap/cache
       - app_data:/var/www
+    networks:
+      - eabms_network
 
   nginx:
     image: nginx:stable-alpine

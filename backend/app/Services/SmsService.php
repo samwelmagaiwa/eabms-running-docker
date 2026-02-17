@@ -178,6 +178,7 @@ class SmsService
 
     /**
      * Format phone number to international format
+     * Automatically adds Tanzania country code +255 if missing
      *
      * @param string $phoneNumber
      * @return string
@@ -187,11 +188,20 @@ class SmsService
         // Remove all non-numeric characters
         $phoneNumber = preg_replace('/[^0-9]/', '', $phoneNumber);
 
+        // Already has country code 255 (e.g., 255712345678)
+        if (strlen($phoneNumber) === 12 && substr($phoneNumber, 0, 3) === '255') {
+            return $phoneNumber;
+        }
+
         // Add Tanzania country code if not present
-        if (strlen($phoneNumber) === 9 && substr($phoneNumber, 0, 1) === '7') {
-            $phoneNumber = '255' . $phoneNumber;
-        } elseif (strlen($phoneNumber) === 10 && substr($phoneNumber, 0, 2) === '07') {
-            $phoneNumber = '255' . substr($phoneNumber, 1);
+        // 9 digits starting with 6, 7, 8, or 9
+        if (strlen($phoneNumber) === 9 && in_array(substr($phoneNumber, 0, 1), ['6', '7', '8', '9'])) {
+            return '255' . $phoneNumber;
+        }
+        
+        // 10 digits starting with 06, 07, 08, or 09
+        if (strlen($phoneNumber) === 10 && in_array(substr($phoneNumber, 0, 2), ['06', '07', '08', '09'])) {
+            return '255' . substr($phoneNumber, 1);
         }
 
         return $phoneNumber;
@@ -206,7 +216,8 @@ class SmsService
     protected function isValidPhoneNumber(string $phoneNumber): bool
     {
         // Check if it's a valid Tanzanian mobile number (12 digits starting with 255)
-        return preg_match('/^255[67][0-9]{8}$/', $phoneNumber);
+        // Supports all Tanzanian mobile prefixes: 2556x, 2557x, 2558x, 2559x
+        return preg_match('/^255[6-9][0-9]{8}$/', $phoneNumber);
     }
 
     /**

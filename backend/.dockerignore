@@ -34,6 +34,7 @@ public/storage
 # Docker
 Dockerfile
 docker-compose.yml
+!docker-entrypoint.sh
 
 # Other Large/Unnecessary Files
 routes.json

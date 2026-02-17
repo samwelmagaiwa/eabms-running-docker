@@ -515,29 +515,7 @@
         return currentData && currentData.length > 0
       },
       filteredData() {
-        let data = this.getCurrentData()
-
-        // Apply search filter
-        if (this.searchQuery) {
-          const query = this.searchQuery.toLowerCase()
-          data = data.filter((user) => {
-            return (
-              (user.staffName && user.staffName.toLowerCase().includes(query)) ||
-              (user.employeeFullName && user.employeeFullName.toLowerCase().includes(query)) ||
-              (user.pfNumber && user.pfNumber.toLowerCase().includes(query)) ||
-              (user.department && user.department.toLowerCase().includes(query))
-            )
-          })
-        }
-
-        // Apply status filter
-        if (this.filterStatus) {
-          data = data.filter((user) => {
-            return user.status && user.status.toLowerCase() === this.filterStatus.toLowerCase()
-          })
-        }
-
-        return data
+        return this.getCurrentData()
       }
     },
     methods: {

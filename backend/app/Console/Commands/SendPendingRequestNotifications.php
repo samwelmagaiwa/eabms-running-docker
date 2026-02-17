@@ -102,13 +102,21 @@ class SendPendingRequestNotifications extends Command
     
     protected function sendNotification($request)
     {
-        // Get HOD for this department
-        $hod = User::whereHas('departmentsAsHOD', function($q) use ($request) {
-            $q->where('departments.id', $request->department_id);
-        })->first();
+        // Get HOD for this department - try direct relationship first (more reliable)
+        $department = \App\Models\Department::with('hod')->find($request->department_id);
+        $hod = $department?->hod;
+        
+        // Fallback: try the reverse relationship query if hod relation didn't work
+        if (!$hod) {
+            $hod = User::whereHas('departmentsAsHOD', function($q) use ($request) {
+                $q->where('id', $request->department_id);
+            })->first();
+        }
         
         if (!$hod) {
             $this->warn("  ⚠️  No HOD found for department ID: {$request->department_id}");
+            $this->warn("     Department name: " . ($department?->name ?? 'Unknown'));
+            $this->warn("     Department hod_user_id: " . ($department?->hod_user_id ?? 'Not set'));
             return 1;
         }
         
