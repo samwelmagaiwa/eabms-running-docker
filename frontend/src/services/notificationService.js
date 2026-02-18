@@ -87,7 +87,7 @@ const notificationService = {
    * Resend/notify SMS to target role (e.g., HOD)
    * Uses the new backend /v1/notifications/retry-sms endpoint
    */
-  async resendSmsGeneric({ requestId, role = null, target = null, phone = null, channel = 'sms' }) {
+  async resendSmsGeneric({ requestId, target = null }) {
     if (!requestId) {
       return {
         success: false,

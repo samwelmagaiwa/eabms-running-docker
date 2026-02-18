@@ -473,7 +473,9 @@
                         >
                           <i class="fas fa-crown text-white text-base"></i>
                         </div>
-                        <span class="text-yellow-100 text-base font-medium">Head of Department</span>
+                        <span class="text-yellow-100 text-base font-medium"
+                          >Head of Department</span
+                        >
                       </div>
                       <div
                         v-if="user.departments_as_hod && user.departments_as_hod.length > 0"

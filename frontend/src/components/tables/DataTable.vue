@@ -213,7 +213,11 @@
       // Get status badge classes based on status value
       getStatusClasses(status) {
         const statusLower = (status || '').toLowerCase()
-        if (statusLower === 'completed' || statusLower === 'active' || statusLower === 'implemented') {
+        if (
+          statusLower === 'completed' ||
+          statusLower === 'active' ||
+          statusLower === 'implemented'
+        ) {
           return 'bg-green-100 text-green-800 border border-green-200'
         } else if (statusLower === 'cancelled' || statusLower === 'inactive') {
           return 'bg-gray-100 text-gray-800 border border-gray-200'
@@ -227,7 +231,11 @@
       // Get status dot color class
       getStatusDotClass(status) {
         const statusLower = (status || '').toLowerCase()
-        if (statusLower === 'completed' || statusLower === 'active' || statusLower === 'implemented') {
+        if (
+          statusLower === 'completed' ||
+          statusLower === 'active' ||
+          statusLower === 'implemented'
+        ) {
           return 'bg-green-500'
         } else if (statusLower === 'cancelled' || statusLower === 'inactive') {
           return 'bg-gray-500'

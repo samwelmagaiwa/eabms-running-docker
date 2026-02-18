@@ -262,7 +262,9 @@
                           <th class="text-left py-2 px-2 text-blue-100 font-bold text-xs w-[8%]">
                             ID
                           </th>
-                          <th class="text-left py-2 px-2 text-blue-100 font-bold text-xs w-[8%]">Type</th>
+                          <th class="text-left py-2 px-2 text-blue-100 font-bold text-xs w-[8%]">
+                            Type
+                          </th>
                           <th class="text-left py-2 px-2 text-blue-100 font-bold text-xs w-[12%]">
                             Services
                           </th>
@@ -364,9 +366,7 @@
                               {{ getCurrentStepText(request.current_step, request.type) }}
                             </div>
                             <div class="text-blue-300 text-xs">
-                              <span v-if="request.current_step === 0"
-                                >Waiting</span
-                              >
+                              <span v-if="request.current_step === 0">Waiting</span>
                               <span v-else-if="request.type === 'booking_service'"
                                 >{{ request.current_step }}/3</span
                               >
@@ -481,7 +481,9 @@
                                 <div
                                   class="w-2.5 h-2.5 rounded-full flex-shrink-0"
                                   :class="
-                                    getSmsStatusColor(request.sms_status || request.sms_to_hod_status)
+                                    getSmsStatusColor(
+                                      request.sms_status || request.sms_to_hod_status
+                                    )
                                   "
                                 ></div>
                                 <span
@@ -493,7 +495,9 @@
                                   "
                                 >
                                   {{
-                                    getSmsStatusText(request.sms_status || request.sms_to_hod_status)
+                                    getSmsStatusText(
+                                      request.sms_status || request.sms_to_hod_status
+                                    )
                                   }}
                                 </span>
                               </div>
@@ -508,7 +512,9 @@
                                 class="px-1.5 py-0.5 text-xs rounded border border-blue-300/50 text-blue-100 hover:bg-blue-700/40 disabled:opacity-50"
                                 title="Retry SMS"
                               >
-                                <span v-if="!isRetrying(request.id)"><i class="fas fa-redo"></i></span>
+                                <span v-if="!isRetrying(request.id)"
+                                  ><i class="fas fa-redo"></i
+                                ></span>
                                 <span v-else><i class="fas fa-spinner fa-spin"></i></span>
                               </button>
                               <span
@@ -523,7 +529,7 @@
                             <div class="relative actions-cell" @click.stop>
                               <!-- Three-dot menu button -->
                               <button
-                                :ref="el => setButtonRef(el, request.id)"
+                                :ref="(el) => setButtonRef(el, request.id)"
                                 @click.stop="toggleActionsMenu(request.id, $event)"
                                 class="px-2 py-1.5 bg-blue-500/30 hover:bg-blue-500/40 border border-blue-400/40 rounded-lg text-blue-200 transition-colors"
                               >
