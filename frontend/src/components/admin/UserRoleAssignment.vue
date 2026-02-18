@@ -465,21 +465,20 @@
                       </div>
                     </div>
 
-                    <!-- HOD Status -->
+                    <!-- HOD Status - Shows departments this user manages as Head of Department -->
                     <div class="mb-4" v-if="user.is_hod">
-                      <div class="flex items-center space-x-2">
+                      <div class="flex items-center space-x-2 mb-2">
                         <div
                           class="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center"
                         >
                           <i class="fas fa-crown text-white text-base"></i>
                         </div>
-                        <span class="text-yellow-100 text-base font-medium">HOD Status</span>
+                        <span class="text-yellow-100 text-base font-medium">Head of Department</span>
                       </div>
                       <div
                         v-if="user.departments_as_hod && user.departments_as_hod.length > 0"
-                        class="mt-2"
+                        class="ml-8"
                       >
-                      <div class="text-base text-yellow-200 mb-1">Head of Department:</div>
                         <div class="flex flex-wrap gap-1">
                           <span
                             v-for="dept in user.departments_as_hod"
