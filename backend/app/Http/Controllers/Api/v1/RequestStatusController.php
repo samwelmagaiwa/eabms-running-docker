@@ -350,9 +350,10 @@ class RequestStatusController extends Controller
             'hod_status' => $accessRequest->hod_status,
             'divisional_status' => $accessRequest->divisional_status,
             // SMS statuses (normalize to sms_status for UI)
+            // Show SMS status for the current workflow stage
             'sms_to_hod_status' => $accessRequest->sms_to_hod_status ?? 'pending',
             'sms_to_ict_director_status' => $accessRequest->sms_to_ict_director_status ?? null,
-            'sms_status' => $accessRequest->sms_to_ict_director_status ?: ($accessRequest->sms_to_hod_status ?? 'pending'),
+            'sms_status' => $this->getCurrentSmsStatus($accessRequest),
         ];
     }
 
@@ -1007,5 +1008,52 @@ class RequestStatusController extends Controller
                 'can_request' => true
             ];
         }
+    }
+
+    /**
+     * Get SMS status for the current workflow stage.
+     * Returns the SMS status relevant to where the request currently is in the workflow.
+     */
+    private function getCurrentSmsStatus(UserAccess $accessRequest): string
+    {
+        // Determine current stage and return appropriate SMS status
+        // Priority: show the SMS status for the stage we're currently at or just passed
+        
+        // If at HOD stage (pending or just submitted)
+        if ($accessRequest->hod_status === 'pending' || $accessRequest->hod_status === null) {
+            return $accessRequest->sms_to_hod_status ?? 'pending';
+        }
+        
+        // If HOD rejected, show HOD SMS status
+        if ($accessRequest->hod_status === 'rejected') {
+            return $accessRequest->sms_to_hod_status ?? 'pending';
+        }
+        
+        // If at Divisional stage
+        if ($accessRequest->hod_status === 'approved' && 
+            ($accessRequest->divisional_status === 'pending' || $accessRequest->divisional_status === null)) {
+            return $accessRequest->sms_to_divisional_status ?? 'pending';
+        }
+        
+        // If at ICT Director stage
+        if (in_array($accessRequest->divisional_status, ['approved', 'skipped']) && 
+            ($accessRequest->ict_director_status === 'pending' || $accessRequest->ict_director_status === null)) {
+            return $accessRequest->sms_to_ict_director_status ?? 'pending';
+        }
+        
+        // If at Head IT stage
+        if ($accessRequest->ict_director_status === 'approved' && 
+            ($accessRequest->head_it_status === 'pending' || $accessRequest->head_it_status === null)) {
+            return $accessRequest->sms_to_head_it_status ?? 'pending';
+        }
+        
+        // If at ICT Officer stage
+        if ($accessRequest->head_it_status === 'approved' && 
+            ($accessRequest->ict_officer_status === 'pending' || $accessRequest->ict_officer_status === null)) {
+            return $accessRequest->sms_to_ict_officer_status ?? 'pending';
+        }
+        
+        // Default: show HOD status as it's the first stage
+        return $accessRequest->sms_to_hod_status ?? 'pending';
     }
 }

@@ -5,10 +5,14 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Controllers\Controller;
 use App\Models\UserAccess;
 use App\Models\IctTaskAssignment;
+use App\Models\User;
+use App\Models\Department;
+use App\Services\SmsModule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class NotificationController extends Controller
 {
@@ -363,6 +367,288 @@ class NotificationController extends Controller
                 'success' => false,
                 'message' => 'Failed to retrieve pending requests breakdown',
                 'error' => app()->environment('local') ? $e->getMessage() : 'Internal server error'
+            ], 500);
+        }
+    }
+
+    /**
+     * Retry sending SMS notification for a request
+     * Staff can retry SMS to HOD for their own requests
+     */
+    public function retrySms(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            $requestId = $request->input('request_id');
+            $target = $request->input('target', 'hod'); // hod, divisional, ict_director, head_it, ict_officer
+
+            if (!$requestId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Request ID is required'
+                ], 400);
+            }
+
+            // Find the access request
+            $accessRequest = UserAccess::with(['user', 'department'])->find($requestId);
+
+            if (!$accessRequest) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Access request not found'
+                ], 404);
+            }
+
+            // Authorization: Staff can only retry SMS for their own requests to HOD
+            $roleName = $user->getPrimaryRoleName();
+            $isStaff = in_array($roleName, ['staff', 'ict_officer', 'secretary_ict']);
+            $isOwner = $accessRequest->user_id === $user->id;
+
+            if ($isStaff && !$isOwner) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You can only retry SMS for your own requests'
+                ], 403);
+            }
+
+            // For staff, only allow retrying to HOD
+            if ($isStaff && $target !== 'hod') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Staff can only retry SMS to HOD'
+                ], 403);
+            }
+
+            // Initialize SMS module
+            $sms = app(SmsModule::class);
+
+            // Build request type label
+            $requestTypes = $accessRequest->request_type ?? [];
+            $types = [];
+            foreach ($requestTypes as $type) {
+                if (str_contains($type, 'jeeva')) $types[] = 'Jeeva';
+                elseif (str_contains($type, 'wellsoft')) $types[] = 'Wellsoft';
+                elseif (str_contains($type, 'internet')) $types[] = 'Internet';
+            }
+            $requestType = implode(' & ', $types) ?: 'Access';
+            $ref = 'MLG-REQ' . str_pad($accessRequest->id, 6, '0', STR_PAD_LEFT);
+
+            $smsResult = null;
+            $statusField = null;
+            $timestampField = null;
+
+            switch ($target) {
+                case 'hod':
+                    // Get HOD for the department
+                    $department = Department::with('hod')->find($accessRequest->department_id);
+                    $hod = $department?->hod;
+
+                    if (!$hod) {
+                        $hod = User::whereHas('departmentsAsHOD', function($q) use ($accessRequest) {
+                            $q->where('id', $accessRequest->department_id);
+                        })->first();
+                    }
+
+                    if (!$hod || !$hod->phone) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => $hod ? 'HOD does not have a phone number registered' : 'No HOD assigned to this department'
+                        ], 422);
+                    }
+
+                    $message = "PENDING APPROVAL: {$requestType} request from {$accessRequest->staff_name} requires your review. Ref: {$ref}. Please check the system. - EABMS";
+                    $smsResult = $sms->sendSms($hod->phone, $message, 'pending_notification', $accessRequest->id, get_class($accessRequest));
+                    $statusField = 'sms_to_hod_status';
+                    $timestampField = 'sms_sent_to_hod_at';
+                    break;
+
+                default:
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unsupported retry target: ' . $target
+                    ], 400);
+            }
+
+            // Update the SMS status based on result
+            $smsStatus = 'failed';
+            $smsSentAt = null;
+
+            if ($smsResult && $smsResult['success']) {
+                $smsStatus = $smsResult['data']['status_to_use'] ?? 'sent';
+                $smsSentAt = ($smsResult['data']['actually_sent'] ?? false) ? now() : null;
+            }
+
+            // Update the access request with new SMS status
+            DB::table('user_access')
+                ->where('id', $accessRequest->id)
+                ->update([
+                    $statusField => $smsStatus,
+                    $timestampField => $smsSentAt,
+                    'updated_at' => now()
+                ]);
+
+            Log::info('SMS retry attempt completed', [
+                'request_id' => $accessRequest->id,
+                'target' => $target,
+                'user_id' => $user->id,
+                'success' => $smsResult['success'] ?? false,
+                'status_set' => $smsStatus,
+                'message' => $smsResult['message'] ?? 'Unknown'
+            ]);
+
+            return response()->json([
+                'success' => $smsResult['success'] ?? false,
+                'message' => $smsResult['message'] ?? 'SMS retry failed',
+                'data' => [
+                    'request_id' => $accessRequest->id,
+                    'target' => $target,
+                    'sms_status' => $smsStatus,
+                    'sent_at' => $smsSentAt?->toISOString()
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('NotificationController: Error retrying SMS', [
+                'user_id' => Auth::id(),
+                'request_id' => $request->input('request_id'),
+                'target' => $request->input('target'),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retry SMS',
+                'error' => app()->environment('local') ? $e->getMessage() : 'Internal server error'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get all notifications for the authenticated user
+     */
+    public function index(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            $perPage = min($request->get('per_page', 20), 100);
+
+            $notifications = DB::table('notifications')
+                ->where('recipient_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => $notifications,
+                'message' => 'Notifications retrieved successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('NotificationController: Error fetching notifications', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve notifications'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get unread notification count
+     */
+    public function unreadCount()
+    {
+        try {
+            $user = Auth::user();
+            $count = DB::table('notifications')
+                ->where('recipient_id', $user->id)
+                ->whereNull('read_at')
+                ->count();
+
+            return response()->json([
+                'success' => true,
+                'data' => ['count' => $count],
+                'message' => 'Unread count retrieved'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to get unread count'
+            ], 500);
+        }
+    }
+
+    /**
+     * Mark notification as read
+     */
+    public function markAsRead($id)
+    {
+        try {
+            $user = Auth::user();
+            $updated = DB::table('notifications')
+                ->where('id', $id)
+                ->where('recipient_id', $user->id)
+                ->update(['read_at' => now()]);
+
+            return response()->json([
+                'success' => $updated > 0,
+                'message' => $updated > 0 ? 'Notification marked as read' : 'Notification not found'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to mark notification as read'
+            ], 500);
+        }
+    }
+
+    /**
+     * Mark all notifications as read
+     */
+    public function markAllAsRead()
+    {
+        try {
+            $user = Auth::user();
+            DB::table('notifications')
+                ->where('recipient_id', $user->id)
+                ->whereNull('read_at')
+                ->update(['read_at' => now()]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'All notifications marked as read'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to mark all as read'
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete a notification
+     */
+    public function destroy($id)
+    {
+        try {
+            $user = Auth::user();
+            $deleted = DB::table('notifications')
+                ->where('id', $id)
+                ->where('recipient_id', $user->id)
+                ->delete();
+
+            return response()->json([
+                'success' => $deleted > 0,
+                'message' => $deleted > 0 ? 'Notification deleted' : 'Notification not found'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete notification'
             ], 500);
         }
     }

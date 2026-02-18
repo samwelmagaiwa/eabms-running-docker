@@ -1089,6 +1089,7 @@ Route::prefix('hod')->middleware('role:head_of_department,divisional_director,ic
         Route::patch('/{id}/mark-read', [\App\Http\Controllers\Api\v1\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
         Route::patch('/mark-all-read', [\App\Http\Controllers\Api\v1\NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
         Route::delete('/{id}', [\App\Http\Controllers\Api\v1\NotificationController::class, 'destroy'])->name('notifications.destroy');
+        Route::post('/retry-sms', [\App\Http\Controllers\Api\v1\NotificationController::class, 'retrySms'])->name('notifications.retry-sms');
     });
 
     // Filtered User Access routes (for admin user management)

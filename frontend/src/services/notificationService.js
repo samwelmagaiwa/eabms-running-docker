@@ -75,113 +75,68 @@ const notificationCache = {
   maxAge: 15000 // 15 seconds cache
 }
 
-const ENABLE_RESEND =
-  String(process.env.VUE_APP_ENABLE_SMS_RESEND || 'false').toLowerCase() === 'true'
-
 const notificationService = {
   /**
-   * Expose feature flag so UIs can disable retry loops when resend is off
+   * SMS resend is now always enabled (backend endpoint exists)
    */
   isResendEnabled() {
-    return ENABLE_RESEND
+    return true
   },
 
   /**
-   * Resend/notify SMS generically across roles with broad endpoint fallbacks.
-   * NOTE: Backend does not expose any resend/notify endpoints in this project.
-   * We short-circuit to avoid spamming non-existent routes (405/404 floods).
+   * Resend/notify SMS to target role (e.g., HOD)
+   * Uses the new backend /v1/notifications/retry-sms endpoint
    */
   async resendSmsGeneric({ requestId, role = null, target = null, phone = null, channel = 'sms' }) {
-    // Feature flag: allow enabling later without code changes
-
-    if (!ENABLE_RESEND) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn(
-          '🚫 NotificationService: SMS resend is disabled (no backend endpoints). Skipping network calls.'
-        )
-      }
+    if (!requestId) {
       return {
         success: false,
-        message: 'SMS resend not supported by backend; skipped'
+        message: 'Request ID is required'
       }
     }
 
-    // Build normalization helpers
-    const normalizePhone = (p) => {
-      if (!p) return null
-      const s = String(p).trim()
-      const keepPlus = s.startsWith('+')
-      const digits = s.replace(/[^\d]/g, '')
-      return keepPlus ? `+${digits}` : digits
+    // Extract numeric ID from formatted request ID (e.g., "REQ-000004" -> 4)
+    let numericId = requestId
+    if (typeof requestId === 'string') {
+      const match = requestId.match(/\d+/)
+      if (match) {
+        numericId = parseInt(match[0], 10)
+      }
     }
-    const rawPhone = phone || null
-    const normalized = normalizePhone(rawPhone)
 
-    // Payload with many compatibility flags and keys
     const payload = {
-      request_id: requestId,
-      role,
-      target,
-      notification_type: 'generic_sms',
-      resend_only: true,
-      force: true,
-      force_resend: true,
-      resend_sms: true,
-      send_sms: true,
-      notification_channel: channel,
-      // Phone variants
-      phone: rawPhone || undefined,
-      phone_number: normalized || undefined,
-      recipient_phone: normalized || undefined,
-      destination_phone: normalized || undefined,
-      msisdn: normalized || undefined,
-      contact_phone: normalized || undefined,
-      requester_phone: rawPhone || undefined,
-      requester_phone_number: rawPhone || undefined,
-      staff_phone: rawPhone || undefined,
-      staff_phone_number: rawPhone || undefined
+      request_id: numericId,
+      target: target || 'hod'
     }
 
-    // Minimal, explicit allowlist (kept empty until backend adds endpoints)
-    const endpoints = []
-
-    let response
-    let lastError
-    for (let i = 0; i < endpoints.length; i++) {
-      try {
-        if (process.env.NODE_ENV === 'development') {
-          console.log(
-            `🔄 NotificationService: Trying resend endpoint ${i + 1}/${endpoints.length}:`,
-            endpoints[i]
-          )
-        }
-        response = await notificationAxiosInstance.post(endpoints[i], payload)
-        if (process.env.NODE_ENV === 'development') {
-          console.log('✅ NotificationService: Resend success via', endpoints[i])
-        }
-        return {
-          success: !!response.data?.success,
-          data: response.data?.data,
-          message: response.data?.message
-        }
-      } catch (e) {
-        lastError = e
-        if (process.env.NODE_ENV === 'development') {
-          console.warn(
-            '❌ NotificationService: Endpoint failed:',
-            endpoints[i],
-            e.response?.status,
-            e.response?.data?.message || e.message
-          )
-        }
-        continue
+    try {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔄 NotificationService: Attempting SMS retry', {
+          requestId: numericId,
+          target: payload.target
+        })
       }
-    }
 
-    return {
-      success: false,
-      message:
-        lastError?.response?.data?.message || lastError?.message || 'No resend endpoints configured'
+      const response = await notificationAxiosInstance.post('/notifications/retry-sms', payload)
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ NotificationService: SMS retry response', response.data)
+      }
+
+      return {
+        success: !!response.data?.success,
+        data: response.data?.data,
+        message: response.data?.message
+      }
+    } catch (e) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('❌ NotificationService: SMS retry failed:', e.response?.data || e.message)
+      }
+
+      return {
+        success: false,
+        message: e.response?.data?.message || e.message || 'SMS retry failed'
+      }
     }
   },
 
