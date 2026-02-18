@@ -128,7 +128,7 @@ class SendSmsNotification
             'user_id' => $event->user->id
         ]);
 
-        $reference = $event->request->reference ?? $event->request->id;
+        $reference = $event->request->reference ?? $event->request->request_id ?? $event->request->id;
 
         // For device booking approvals, SMS is handled directly by the BookingServiceController.
         // Skip generic listener-based SMS to avoid duplicate and conflicting messages.
@@ -162,24 +162,78 @@ class SendSmsNotification
             ]);
         }
 
-        // If approved and there are additional stakeholders to notify
-        if ($statusKey === 'approved' && !empty($event->additionalNotifyUsers)) {
-            $message = $this->buildAdditionalApprovalMessage(
+        // Notify next approvers when request progresses through the workflow
+        // Check for ANY approval progression status, not just 'approved'
+        $isApprovalProgressing = $this->isApprovalProgressionStatus($statusKey);
+        
+        if ($isApprovalProgressing && !empty($event->additionalNotifyUsers)) {
+            $nextApproverLevel = $this->getNextApproverLevelFromStatus($statusKey);
+            $message = $this->buildNextApproverNotificationMessage(
                 $event->user,
                 $event->requestType,
-                [ 'reference' => $reference ]
+                $reference,
+                $nextApproverLevel
             );
 
-            $this->sms->sendBulkSms(
+            $results = $this->sms->sendBulkSms(
                 $event->additionalNotifyUsers,
                 $message,
                 'approval_notification'
             );
+            
+            Log::info('SMS sent to next approvers', [
+                'request_id' => $event->request->id,
+                'new_status' => $statusKey,
+                'next_level' => $nextApproverLevel,
+                'recipients_count' => count($event->additionalNotifyUsers),
+                'sent' => $results['sent'] ?? 0,
+                'failed' => $results['failed'] ?? 0
+            ]);
         }
+    }
+    
+    /**
+     * Check if the status indicates approval progression (moving to next stage)
+     *
+     * @param string $status
+     * @return bool
+     */
+    protected function isApprovalProgressionStatus(string $status): bool
+    {
+        // Statuses that indicate request is progressing to next approval stage
+        $progressionStatuses = [
+            'hod_approved',
+            'pending_divisional',
+            'divisional_approved', 
+            'pending_ict_director',
+            'ict_director_approved',
+            'pending_head_it',
+            'head_it_approved',
+            'pending_ict_officer',
+        ];
+        
+        return in_array($status, $progressionStatuses);
+    }
+    
+    /**
+     * Get the next approver level from the current status
+     *
+     * @param string $status
+     * @return string
+     */
+    protected function getNextApproverLevelFromStatus(string $status): string
+    {
+        return match($status) {
+            'hod_approved', 'pending_divisional' => 'Divisional Director',
+            'divisional_approved', 'pending_ict_director' => 'ICT Director',
+            'ict_director_approved', 'pending_head_it' => 'Head of IT',
+            'head_it_approved', 'pending_ict_officer' => 'ICT Officer',
+            default => 'Next Approver'
+        };
     }
 
     /**
-     * Build additional approval notification message
+     * Build additional approval notification message (for final approval)
      *
      * @param $user
      * @param string $requestType
@@ -200,16 +254,71 @@ class SendSmsNotification
             $additionalData['reference']
         ], $template);
     }
+    
+    /**
+     * Build notification message for the next approver in the workflow
+     *
+     * @param $user
+     * @param string $requestType
+     * @param string $reference
+     * @param string $approverLevel
+     * @return string
+     */
+    protected function buildNextApproverNotificationMessage($user, string $requestType, string $reference, string $approverLevel): string
+    {
+        $template = "PENDING APPROVAL: {type} request from {requester} requires your review as {level}. Ref: {ref}. Please login to approve. - ICT MNH-MLOGANZILA";
+
+        return str_replace([
+            '{requester}',
+            '{type}',
+            '{ref}',
+            '{level}'
+        ], [
+            $user->name ?? 'Staff',
+            ucfirst(str_replace('_', ' ', $requestType)),
+            $reference,
+            $approverLevel
+        ], $template);
+    }
 
     /**
-     * Build requester approval message (pending/approved/rejected)
+     * Build requester approval message for all workflow statuses
      */
     protected function buildApprovalMessage(string $name, string $requestType, string $status, array $additionalData): string
     {
         $templates = [
-            'pending' => "Dear {name}, your {type} request has been submitted and is pending approval. Reference: {ref}. You will be notified once reviewed. - ICT MNH-MLOGANZILA",
-            'approved' => "Dear {name}, your {type} request has been APPROVED. Reference: {ref}. You can now proceed with access. - ICT MNH-MLOGANZILA",
-            'rejected' => "Dear {name}, your {type} request has been REJECTED. Reference: {ref}. Reason: {reason}. Contact IT for assistance. - ICT MNH-MLOGANZILA"
+            // Initial submission
+            'pending' => "Dear {name}, your {type} request has been submitted and is pending approval. Ref: {ref}. You will be notified on progress. - ICT MNH-MLOGANZILA",
+            'pending_hod' => "Dear {name}, your {type} request has been submitted and is pending HOD approval. Ref: {ref}. - ICT MNH-MLOGANZILA",
+            
+            // HOD Stage
+            'hod_approved' => "Dear {name}, your {type} request has been APPROVED by HOD and forwarded to Divisional Director. Ref: {ref}. - ICT MNH-MLOGANZILA",
+            'hod_rejected' => "Dear {name}, your {type} request has been REJECTED by HOD. Ref: {ref}. Reason: {reason}. Contact your HOD for guidance. - ICT MNH-MLOGANZILA",
+            
+            // Divisional Director Stage
+            'pending_divisional' => "Dear {name}, your {type} request is now with Divisional Director for approval. Ref: {ref}. - ICT MNH-MLOGANZILA",
+            'divisional_approved' => "Dear {name}, your {type} request has been APPROVED by Divisional Director and forwarded to ICT Director. Ref: {ref}. - ICT MNH-MLOGANZILA",
+            'divisional_rejected' => "Dear {name}, your {type} request has been REJECTED by Divisional Director. Ref: {ref}. Reason: {reason}. - ICT MNH-MLOGANZILA",
+            
+            // ICT Director Stage
+            'pending_ict_director' => "Dear {name}, your {type} request is now with ICT Director for approval. Ref: {ref}. - ICT MNH-MLOGANZILA",
+            'ict_director_approved' => "Dear {name}, your {type} request has been APPROVED by ICT Director and forwarded to Head of IT. Ref: {ref}. - ICT MNH-MLOGANZILA",
+            'ict_director_rejected' => "Dear {name}, your {type} request has been REJECTED by ICT Director. Ref: {ref}. Reason: {reason}. - ICT MNH-MLOGANZILA",
+            
+            // Head of IT Stage
+            'pending_head_it' => "Dear {name}, your {type} request is now with Head of IT for approval. Ref: {ref}. - ICT MNH-MLOGANZILA",
+            'head_it_approved' => "Dear {name}, your {type} request has been FULLY APPROVED and assigned to ICT Officer for implementation. Ref: {ref}. - ICT MNH-MLOGANZILA",
+            'head_it_rejected' => "Dear {name}, your {type} request has been REJECTED by Head of IT. Ref: {ref}. Reason: {reason}. - ICT MNH-MLOGANZILA",
+            
+            // ICT Officer Stage
+            'pending_ict_officer' => "Dear {name}, your {type} request is assigned to ICT Officer for implementation. Ref: {ref}. You will be notified once complete. - ICT MNH-MLOGANZILA",
+            'implemented' => "Dear {name}, CONGRATULATIONS! Your {type} access is now ACTIVE and ready to use. Ref: {ref}. Contact ICT for support. - ICT MNH-MLOGANZILA",
+            'ict_officer_rejected' => "Dear {name}, your {type} request could not be implemented. Ref: {ref}. Reason: {reason}. Contact ICT for assistance. - ICT MNH-MLOGANZILA",
+            
+            // Generic statuses
+            'approved' => "Dear {name}, your {type} request has been APPROVED. Ref: {ref}. - ICT MNH-MLOGANZILA",
+            'rejected' => "Dear {name}, your {type} request has been REJECTED. Ref: {ref}. Reason: {reason}. Contact ICT for assistance. - ICT MNH-MLOGANZILA",
+            'cancelled' => "Dear {name}, your {type} request has been CANCELLED. Ref: {ref}. Reason: {reason}. - ICT MNH-MLOGANZILA"
         ];
 
         $template = $templates[$status] ?? $templates['pending'];

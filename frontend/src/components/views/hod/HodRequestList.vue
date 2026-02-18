@@ -968,7 +968,7 @@
             delete this.retryTimers[id]
             const latest = (this.requests || []).find((r) => r.id === id) || request
             const status = this.getRelevantSmsStatus(latest)
-            if (status !== 'sent') {
+            if (!['sent', 'delivered'].includes(status)) {
               this.scheduleNextRetry(id, request)
             } else {
               this.retryAttempts[id] = 0
@@ -1031,29 +1031,45 @@
         return 'pending'
       },
 
+      // SMS Status methods - handles all possible SMS statuses
+      // 'sent' = SMS sent to provider, waiting for delivery confirmation
+      // 'delivered' = Delivery confirmed via callback from provider
+      // 'pending' = Not yet processed/sent
+      // 'failed' = SMS sending failed
+      // 'disabled' = SMS service is disabled
+      // 'test_mode' = SMS is in test mode
       getSmsStatusText(smsStatus) {
         const statusMap = {
-          sent: 'Delivered',
+          delivered: 'Delivered',
+          sent: 'Sent',
           pending: 'Pending',
-          failed: 'Failed'
+          failed: 'Failed',
+          disabled: 'Disabled',
+          test_mode: 'Test Mode'
         }
         return statusMap[smsStatus] || 'Pending'
       },
 
       getSmsStatusColor(smsStatus) {
         const colorMap = {
-          sent: 'bg-green-500',
+          delivered: 'bg-green-500',
+          sent: 'bg-blue-500',
           pending: 'bg-yellow-500',
-          failed: 'bg-red-500'
+          failed: 'bg-red-500',
+          disabled: 'bg-gray-500',
+          test_mode: 'bg-purple-500'
         }
         return colorMap[smsStatus] || 'bg-gray-400'
       },
 
       getSmsStatusTextColor(smsStatus) {
         const textColorMap = {
-          sent: 'text-green-400',
+          delivered: 'text-green-400',
+          sent: 'text-blue-400',
           pending: 'text-yellow-400',
-          failed: 'text-red-400'
+          failed: 'text-red-400',
+          disabled: 'text-gray-400',
+          test_mode: 'text-purple-400'
         }
         return textColorMap[smsStatus] || 'text-gray-400'
       }

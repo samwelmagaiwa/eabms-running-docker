@@ -185,11 +185,15 @@ class UserAccessWorkflowService
             try {
                 $user = $freshUserAccess->user;
                 $approver = auth()->user();
-                $oldStatus = 'hod_approved';
+                // oldStatus: was pending_hod (waiting for HOD approval)
+                // newStatus: hod_approved (for staff) or the workflow status for next approver routing
+                $oldStatus = 'pending_hod';
 
-                // Derive the next workflow label based on where we routed
+                // Derive the status for SMS template based on approval outcome
                 if ($request->action === 'approve') {
-                    $newStatus = $freshUserAccess->status; // 'pending_divisional' or 'pending_ict_director'
+                    // For staff SMS, use hod_approved to show HOD approved their request
+                    // The workflow status (pending_divisional/pending_ict_director) is used internally
+                    $newStatus = 'hod_approved';
                 } else {
                     $newStatus = 'hod_rejected';
                 }
@@ -211,13 +215,14 @@ class UserAccessWorkflowService
                     $additionalNotifyUsers
                 );
                 
-                Log::info('SMS notification event fired for Divisional Director approval', [
+                Log::info('SMS notification event fired for HOD approval', [
                     'request_id' => $freshUserAccess->id,
                     'action' => $request->action,
-                    'approver_id' => $approver->id
+                    'approver_id' => $approver->id,
+                    'next_approvers_count' => count($additionalNotifyUsers)
                 ]);
             } catch (\Exception $e) {
-                Log::error('Failed to fire SMS notification for Divisional Director approval', [
+                Log::error('Failed to fire SMS notification for HOD approval', [
                     'request_id' => $freshUserAccess->id,
                     'error' => $e->getMessage()
                 ]);
@@ -272,10 +277,12 @@ class UserAccessWorkflowService
             try {
                 $user = $freshUserAccess->user;
                 $approver = auth()->user();
-                $oldStatus = 'divisional_approved';
-                $newStatus = $request->action === 'approve' ? 'ict_director_approved' : 'ict_director_rejected';
+                // oldStatus: was pending_divisional (waiting for Divisional Director)
+                // newStatus: divisional_approved or divisional_rejected
+                $oldStatus = 'pending_divisional';
+                $newStatus = $request->action === 'approve' ? 'divisional_approved' : 'divisional_rejected';
                 
-                // Get additional users to notify (next approvers if approved)
+                // Get additional users to notify (ICT Directors if approved)
                 $additionalNotifyUsers = [];
                 if ($request->action === 'approve') {
                     $additionalNotifyUsers = $this->getNextApprovers($freshUserAccess);
@@ -292,13 +299,14 @@ class UserAccessWorkflowService
                     $additionalNotifyUsers
                 );
                 
-                Log::info('SMS notification event fired for ICT Director approval', [
+                Log::info('SMS notification event fired for Divisional Director approval', [
                     'request_id' => $freshUserAccess->id,
                     'action' => $request->action,
-                    'approver_id' => $approver->id
+                    'approver_id' => $approver->id,
+                    'next_approvers_count' => count($additionalNotifyUsers)
                 ]);
             } catch (\Exception $e) {
-                Log::error('Failed to fire SMS notification for ICT Director approval', [
+                Log::error('Failed to fire SMS notification for Divisional Director approval', [
                     'request_id' => $freshUserAccess->id,
                     'error' => $e->getMessage()
                 ]);
@@ -353,10 +361,12 @@ class UserAccessWorkflowService
             try {
                 $user = $freshUserAccess->user;
                 $approver = auth()->user();
-                $oldStatus = 'ict_director_approved';
-                $newStatus = $request->action === 'approve' ? 'head_it_approved' : 'head_it_rejected';
+                // oldStatus: was pending_ict_director (waiting for ICT Director)
+                // newStatus: ict_director_approved or ict_director_rejected
+                $oldStatus = 'pending_ict_director';
+                $newStatus = $request->action === 'approve' ? 'ict_director_approved' : 'ict_director_rejected';
                 
-                // Get additional users to notify (next approvers if approved)
+                // Get additional users to notify (Head of IT if approved)
                 $additionalNotifyUsers = [];
                 if ($request->action === 'approve') {
                     $additionalNotifyUsers = $this->getNextApprovers($freshUserAccess);
@@ -373,13 +383,14 @@ class UserAccessWorkflowService
                     $additionalNotifyUsers
                 );
                 
-                Log::info('SMS notification event fired for Head IT approval', [
+                Log::info('SMS notification event fired for ICT Director approval', [
                     'request_id' => $freshUserAccess->id,
                     'action' => $request->action,
-                    'approver_id' => $approver->id
+                    'approver_id' => $approver->id,
+                    'next_approvers_count' => count($additionalNotifyUsers)
                 ]);
             } catch (\Exception $e) {
-                Log::error('Failed to fire SMS notification for Head IT approval', [
+                Log::error('Failed to fire SMS notification for ICT Director approval', [
                     'request_id' => $freshUserAccess->id,
                     'error' => $e->getMessage()
                 ]);
@@ -434,8 +445,16 @@ class UserAccessWorkflowService
             try {
                 $user = $freshUserAccess->user;
                 $approver = auth()->user();
-                $oldStatus = 'head_it_approved';
-                $newStatus = $request->action === 'implement' ? 'implemented' : 'rejected';
+                // oldStatus: was pending_head_it (waiting for Head IT)
+                // newStatus: head_it_approved or head_it_rejected
+                $oldStatus = 'pending_head_it';
+                $newStatus = $request->action === 'approve' ? 'head_it_approved' : 'head_it_rejected';
+                
+                // Get additional users to notify (ICT Officers if approved)
+                $additionalNotifyUsers = [];
+                if ($request->action === 'approve') {
+                    $additionalNotifyUsers = $this->getNextApprovers($freshUserAccess);
+                }
                 
                 ApprovalStatusChanged::dispatch(
                     $user,
@@ -444,16 +463,18 @@ class UserAccessWorkflowService
                     $oldStatus,
                     $newStatus,
                     $approver,
-                    $request->comments
+                    $request->comments,
+                    $additionalNotifyUsers
                 );
                 
-                Log::info('SMS notification event fired for ICT Officer implementation', [
+                Log::info('SMS notification event fired for Head IT approval', [
                     'request_id' => $freshUserAccess->id,
                     'action' => $request->action,
-                    'approver_id' => $approver->id
+                    'approver_id' => $approver->id,
+                    'next_approvers_count' => count($additionalNotifyUsers)
                 ]);
             } catch (\Exception $e) {
-                Log::error('Failed to fire SMS notification for ICT Officer implementation', [
+                Log::error('Failed to fire SMS notification for Head IT approval', [
                     'request_id' => $freshUserAccess->id,
                     'error' => $e->getMessage()
                 ]);
@@ -502,7 +523,41 @@ class UserAccessWorkflowService
             }
 
             $userAccess->update($data);
-            return $userAccess->fresh();
+            $freshUserAccess = $userAccess->fresh();
+            
+            // Fire approval status changed event for SMS notification - CRITICAL for staff to know access is granted
+            try {
+                $user = $freshUserAccess->user;
+                $approver = auth()->user();
+                // oldStatus: was pending_ict_officer (waiting for implementation)
+                // newStatus: implemented or ict_officer_rejected
+                $oldStatus = 'pending_ict_officer';
+                $newStatus = $request->action === 'implement' ? 'implemented' : 'ict_officer_rejected';
+                
+                ApprovalStatusChanged::dispatch(
+                    $user,
+                    $freshUserAccess,
+                    'user_access',
+                    $oldStatus,
+                    $newStatus,
+                    $approver,
+                    $request->comments
+                );
+                
+                Log::info('SMS notification event fired for ICT Officer implementation', [
+                    'request_id' => $freshUserAccess->id,
+                    'action' => $request->action,
+                    'approver_id' => $approver->id,
+                    'new_status' => $newStatus
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to fire SMS notification for ICT Officer implementation', [
+                    'request_id' => $freshUserAccess->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+            
+            return $freshUserAccess;
         });
     }
 

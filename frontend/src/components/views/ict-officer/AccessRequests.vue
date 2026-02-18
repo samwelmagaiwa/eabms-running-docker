@@ -1039,31 +1039,45 @@
     return 'pending'
   }
 
+  // SMS Status methods - handles all possible SMS statuses
+  // 'sent' = SMS sent to provider, waiting for delivery confirmation
+  // 'delivered' = Delivery confirmed via callback from provider
+  // 'pending' = Not yet processed/sent
+  // 'failed' = SMS sending failed
+  // 'disabled' = SMS service is disabled
+  // 'test_mode' = SMS is in test mode
   function getSmsStatusText(smsStatus) {
-    // NOTE: "sent" here means "submitted to provider".
-    // We only know "delivered" if we receive provider delivery reports.
     const statusMap = {
-      sent: 'Submitted',
+      delivered: 'Delivered',
+      sent: 'Sent',
       pending: 'Pending',
-      failed: 'Failed'
+      failed: 'Failed',
+      disabled: 'Disabled',
+      test_mode: 'Test Mode'
     }
     return statusMap[smsStatus] || 'Pending'
   }
 
   function getSmsStatusColor(smsStatus) {
     const colorMap = {
-      sent: 'bg-green-500',
+      delivered: 'bg-green-500',
+      sent: 'bg-blue-500',
       pending: 'bg-yellow-500',
-      failed: 'bg-red-500'
+      failed: 'bg-red-500',
+      disabled: 'bg-gray-500',
+      test_mode: 'bg-purple-500'
     }
     return colorMap[smsStatus] || 'bg-gray-400'
   }
 
   function getSmsStatusTextColor(smsStatus) {
     const textColorMap = {
-      sent: 'text-green-400',
+      delivered: 'text-green-400',
+      sent: 'text-blue-400',
       pending: 'text-yellow-400',
-      failed: 'text-red-400'
+      failed: 'text-red-400',
+      disabled: 'text-gray-400',
+      test_mode: 'text-purple-400'
     }
     return textColorMap[smsStatus] || 'text-gray-400'
   }
