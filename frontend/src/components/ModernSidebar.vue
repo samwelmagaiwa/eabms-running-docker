@@ -5,7 +5,7 @@
       isCollapsed ? 'w-16 sidebar-collapsed' : 'sidebar-expanded',
       !shouldShowSidebar ? 'invisible pointer-events-none opacity-0' : 'opacity-100'
     ]"
-    :style="!isCollapsed ? 'width: 16rem;' : ''"
+    :style="!isCollapsed ? 'width: 13rem;' : ''"
     aria-label="Sidebar navigation"
     style="
       background: linear-gradient(

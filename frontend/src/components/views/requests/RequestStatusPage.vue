@@ -255,19 +255,19 @@
                 <!-- Requests Table -->
                 <div v-else class="overflow-visible">
                   <!-- Desktop Table -->
-                  <div class="hidden lg:block bg-white/10 rounded-lg overflow-visible">
-                    <table class="w-full relative">
+                  <div class="hidden lg:block bg-white/10 rounded-lg">
+                    <table class="w-full relative table-fixed">
                       <thead class="bg-blue-800/50">
                         <tr class="border-b border-blue-300/20">
-                          <th class="text-left py-3 px-3 text-blue-100 font-bold text-xs">
-                            Request ID
+                          <th class="text-left py-2 px-2 text-blue-100 font-bold text-xs w-[8%]">
+                            ID
                           </th>
-                          <th class="text-left py-3 px-3 text-blue-100 font-bold text-xs">Type</th>
-                          <th class="text-left py-3 px-3 text-blue-100 font-bold text-xs">
+                          <th class="text-left py-2 px-2 text-blue-100 font-bold text-xs w-[8%]">Type</th>
+                          <th class="text-left py-2 px-2 text-blue-100 font-bold text-xs w-[12%]">
                             Services
                           </th>
-                          <th class="text-left py-3 px-3 text-blue-100 font-bold text-xs">
-                            <div class="flex items-center space-x-2">
+                          <th class="text-left py-2 px-2 text-blue-100 font-bold text-xs w-[10%]">
+                            <div class="flex items-center space-x-1">
                               <span
                                 :class="
                                   hasImplementedOrApproved ? 'text-green-400' : 'text-blue-200'
@@ -281,22 +281,22 @@
                               ></i>
                             </div>
                           </th>
-                          <th class="text-left py-3 px-3 text-blue-100 font-bold text-xs">
-                            Current Step
+                          <th class="text-left py-2 px-2 text-blue-100 font-bold text-xs w-[12%]">
+                            Step
                           </th>
-                          <th class="text-left py-3 px-3 text-blue-100 font-bold text-xs">
-                            Submitted
+                          <th class="text-left py-2 px-2 text-blue-100 font-bold text-xs w-[10%]">
+                            Date
                           </th>
-                          <th class="text-left py-3 px-3 text-blue-100 font-bold text-xs">
-                            Device Status
+                          <th class="text-left py-2 px-2 text-blue-100 font-bold text-xs w-[10%]">
+                            Device
                           </th>
-                          <th class="text-left py-3 px-3 text-blue-100 font-bold text-xs">
-                            Return Status
+                          <th class="text-left py-2 px-2 text-blue-100 font-bold text-xs w-[10%]">
+                            Return
                           </th>
-                          <th class="text-left py-3 px-3 text-blue-100 font-bold text-xs">
-                            SMS Status
+                          <th class="text-left py-2 px-2 text-blue-100 font-bold text-xs w-[12%]">
+                            SMS
                           </th>
-                          <th class="text-left py-3 px-3 text-blue-100 font-bold text-xs">
+                          <th class="text-left py-2 px-2 text-blue-100 font-bold text-xs w-[8%]">
                             Actions
                           </th>
                         </tr>
@@ -307,47 +307,48 @@
                           :key="request.id"
                           class="border-t border-blue-300/20 hover:bg-blue-700/30 transition-colors"
                         >
-                          <td class="py-3 px-3">
+                          <td class="py-2 px-2">
                             <div class="font-medium text-white text-sm">
                               {{ formatRequestId(request.id) }}
                             </div>
-                            <div class="text-blue-300 text-xs mt-1">
+                            <div class="text-blue-300 text-xs mt-0.5 truncate">
                               {{ getRequestTypeLabel(request) }}
                             </div>
                           </td>
-                          <td class="py-3 px-3">
-                            <div class="flex items-center space-x-2">
+                          <td class="py-2 px-2">
+                            <div class="flex items-center space-x-1">
                               <i
                                 :class="getRequestTypeIcon(request.type)"
                                 class="text-blue-400 text-sm"
                               ></i>
-                              <span class="text-white text-sm">{{
+                              <span class="text-white text-sm truncate">{{
                                 getRequestTypeName(request.type)
                               }}</span>
                             </div>
                           </td>
-                          <td class="py-3 px-3">
-                            <div class="flex flex-wrap gap-1">
+                          <td class="py-2 px-2">
+                            <div class="flex flex-wrap gap-0.5">
                               <span
                                 v-for="service in request.services"
                                 :key="service"
-                                class="px-2 py-0.5 bg-blue-500/20 text-blue-300 text-xs rounded-full border border-blue-400/30"
+                                class="px-1.5 py-0.5 bg-blue-500/20 text-blue-300 text-xs rounded-full border border-blue-400/30 truncate max-w-[70px]"
+                                :title="service"
                               >
                                 {{ service }}
                               </span>
                             </div>
                           </td>
-                          <td class="py-3 px-3">
-                            <div class="flex items-center space-x-2">
+                          <td class="py-2 px-2">
+                            <div class="flex items-center space-x-1">
                               <div
-                                class="w-2.5 h-2.5 rounded-full"
+                                class="w-2.5 h-2.5 rounded-full flex-shrink-0"
                                 :class="getStatusColor(request.status)"
                               ></div>
                               <span
-                                class="text-sm font-semibold flex items-center space-x-2"
+                                class="text-sm font-semibold flex items-center space-x-1"
                                 :class="getStatusTextColor(request.status)"
                               >
-                                <span>{{ getStatusText(request.status) }}</span>
+                                <span class="truncate">{{ getStatusText(request.status) }}</span>
                                 <i
                                   v-if="
                                     request.status === 'implemented' ||
@@ -358,18 +359,18 @@
                               </span>
                             </div>
                           </td>
-                          <td class="py-3 px-3">
-                            <div class="text-white text-sm">
+                          <td class="py-2 px-2">
+                            <div class="text-white text-sm truncate">
                               {{ getCurrentStepText(request.current_step, request.type) }}
                             </div>
                             <div class="text-blue-300 text-xs">
                               <span v-if="request.current_step === 0"
-                                >Waiting from another user</span
+                                >Waiting</span
                               >
                               <span v-else-if="request.type === 'booking_service'"
-                                >Step {{ request.current_step }} of 3</span
+                                >{{ request.current_step }}/3</span
                               >
-                              <span v-else>Step {{ request.current_step }} of 6</span>
+                              <span v-else>{{ request.current_step }}/6</span>
                             </div>
                             <div
                               v-if="
@@ -377,23 +378,23 @@
                                 (request.hod_status === 'skipped' ||
                                   request.divisional_status === 'skipped')
                               "
-                              class="flex items-center gap-2 mt-1"
+                              class="flex items-center gap-1 mt-0.5"
                             >
                               <span
                                 v-if="request.hod_status === 'skipped'"
-                                class="px-2 py-0.5 text-xs rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-200"
+                                class="px-1.5 py-0.5 text-xs rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-200"
                               >
-                                HOD skipped
+                                HOD
                               </span>
                               <span
                                 v-if="request.divisional_status === 'skipped'"
-                                class="px-2 py-0.5 text-xs rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-200"
+                                class="px-1.5 py-0.5 text-xs rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-200"
                               >
-                                Divisional skipped
+                                Div
                               </span>
                             </div>
                           </td>
-                          <td class="py-3 px-3">
+                          <td class="py-2 px-2">
                             <div class="text-white text-sm">
                               {{ formatDate(request.created_at) }}
                             </div>
@@ -401,7 +402,7 @@
                               {{ formatTime(request.created_at) }}
                             </div>
                           </td>
-                          <td class="py-3 px-3">
+                          <td class="py-2 px-2">
                             <div
                               v-if="
                                 request.type === 'booking_service' && request.device_availability
@@ -409,17 +410,17 @@
                             >
                               <div
                                 v-if="request.device_availability.is_available"
-                                class="flex items-center space-x-2"
+                                class="flex items-center space-x-1"
                               >
-                                <div class="w-3 h-3 rounded-full bg-green-500"></div>
-                                <span class="text-green-300 text-xs font-semibold">Available</span>
+                                <div class="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+                                <span class="text-green-300 text-xs font-semibold">OK</span>
                               </div>
                               <div
                                 v-else-if="request.device_availability.status === 'out_of_stock'"
-                                class="space-y-1"
+                                class="space-y-0.5"
                               >
-                                <div class="flex items-center space-x-2">
-                                  <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                <div class="flex items-center space-x-1">
+                                  <div class="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
                                   <span class="text-yellow-300 text-xs font-semibold">In Use</span>
                                 </div>
                                 <div
@@ -450,50 +451,52 @@
                                   {{ request.device_availability.nearest_return.date_time }}
                                 </div>
                               </div>
-                              <div v-else class="flex items-center space-x-2">
-                                <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                                <span class="text-red-300 text-xs font-semibold">Unavailable</span>
+                              <div v-else class="flex items-center space-x-1">
+                                <div class="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+                                <span class="text-red-300 text-xs font-semibold">N/A</span>
                               </div>
                             </div>
-                            <div v-else class="text-gray-400 text-sm">N/A</div>
+                            <div v-else class="text-gray-400 text-sm">-</div>
                           </td>
-                          <td class="py-3 px-3">
+                          <td class="py-2 px-2">
                             <div v-if="request.type === 'booking_service'">
-                              <div class="flex items-center space-x-2">
+                              <div class="flex items-center space-x-1">
                                 <div
                                   class="w-2.5 h-2.5 rounded-full"
                                   :class="getReturnStatusColor(request.return_status)"
                                 ></div>
                                 <span
-                                  class="text-sm font-semibold"
+                                  class="text-sm font-semibold truncate"
                                   :class="getReturnStatusTextColor(request.return_status)"
                                 >
                                   {{ getReturnStatusText(request.return_status) }}
                                 </span>
                               </div>
                             </div>
-                            <div v-else class="text-gray-400 text-sm">N/A</div>
+                            <div v-else class="text-gray-400 text-sm">-</div>
                           </td>
-                          <td class="py-3 px-3">
-                            <div class="flex items-center space-x-2">
-                              <div
-                                class="w-2.5 h-2.5 rounded-full"
-                                :class="
-                                  getSmsStatusColor(request.sms_status || request.sms_to_hod_status)
-                                "
-                              ></div>
-                              <span
-                                class="text-sm font-semibold"
-                                :class="
-                                  getSmsStatusTextColor(
-                                    request.sms_status || request.sms_to_hod_status
-                                  )
-                                "
-                              >
-                                {{
-                                  getSmsStatusText(request.sms_status || request.sms_to_hod_status)
-                                }}
-                              </span>
+                          <td class="py-2 px-2">
+                            <div class="flex items-center flex-wrap gap-1">
+                              <div class="flex items-center space-x-1">
+                                <div
+                                  class="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                                  :class="
+                                    getSmsStatusColor(request.sms_status || request.sms_to_hod_status)
+                                  "
+                                ></div>
+                                <span
+                                  class="text-sm font-semibold"
+                                  :class="
+                                    getSmsStatusTextColor(
+                                      request.sms_status || request.sms_to_hod_status
+                                    )
+                                  "
+                                >
+                                  {{
+                                    getSmsStatusText(request.sms_status || request.sms_to_hod_status)
+                                  }}
+                                </span>
+                              </div>
                               <button
                                 v-if="
                                   request.type === 'combined_access' &&
@@ -502,71 +505,30 @@
                                 "
                                 @click.stop="retrySendSms(request)"
                                 :disabled="isRetrying(request.id)"
-                                class="ml-2 px-2 py-1 text-xs rounded border border-blue-300/50 text-blue-100 hover:bg-blue-700/40 disabled:opacity-50"
-                                title="Retry sending SMS to HOD"
+                                class="px-1.5 py-0.5 text-xs rounded border border-blue-300/50 text-blue-100 hover:bg-blue-700/40 disabled:opacity-50"
+                                title="Retry SMS"
                               >
-                                <span v-if="!isRetrying(request.id)">Retry</span>
-                                <span v-else
-                                  ><i class="fas fa-spinner fa-spin mr-1"></i>Retrying</span
-                                >
+                                <span v-if="!isRetrying(request.id)"><i class="fas fa-redo"></i></span>
+                                <span v-else><i class="fas fa-spinner fa-spin"></i></span>
                               </button>
                               <span
                                 v-if="getRetryAttempts(request.id) > 0"
-                                class="text-xs text-blue-200 ml-1"
+                                class="text-xs text-blue-200"
                               >
                                 ({{ getRetryAttempts(request.id) }})
                               </span>
                             </div>
                           </td>
-                          <td class="py-3 px-3">
-                            <div class="relative" @click.stop>
+                          <td class="py-2 px-2">
+                            <div class="relative actions-cell" @click.stop>
                               <!-- Three-dot menu button -->
                               <button
-                                @click.stop="toggleActionsMenu(request.id)"
-                                class="px-2 py-1 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 rounded-lg text-blue-300 transition-colors"
+                                :ref="el => setButtonRef(el, request.id)"
+                                @click.stop="toggleActionsMenu(request.id, $event)"
+                                class="px-2 py-1.5 bg-blue-500/30 hover:bg-blue-500/40 border border-blue-400/40 rounded-lg text-blue-200 transition-colors"
                               >
                                 <i class="fas fa-ellipsis-v text-sm"></i>
                               </button>
-
-                              <!-- Dropdown menu -->
-                              <div
-                                v-if="activeMenuId === request.id"
-                                @click.stop
-                                class="absolute right-0 bottom-full mb-2 w-48 bg-slate-800 border-2 border-blue-400/40 rounded-xl shadow-2xl z-[9999] overflow-hidden"
-                              >
-                                <!-- View button -->
-                                <button
-                                  @click="handleViewMenuAction(request)"
-                                  class="w-full px-4 py-3 text-left text-blue-300 hover:bg-blue-500/20 transition-colors flex items-center space-x-3 border-b border-blue-400/20"
-                                >
-                                  <i class="fas fa-eye text-blue-400 w-5"></i>
-                                  <span class="font-medium">View Details</span>
-                                </button>
-
-                                <!-- Edit button (conditional) -->
-                                <button
-                                  v-if="canEditRequest(request)"
-                                  @click="handleEditMenuAction(request)"
-                                  class="w-full px-4 py-3 text-left text-green-300 hover:bg-green-500/20 transition-colors flex items-center space-x-3 border-b border-blue-400/20"
-                                >
-                                  <i class="fas fa-edit text-green-400 w-5"></i>
-                                  <span class="font-medium">
-                                    {{
-                                      request.status === 'cancelled' ? 'Edit & Resubmit' : 'Edit'
-                                    }}
-                                  </span>
-                                </button>
-
-                                <!-- Cancel button (conditional) -->
-                                <button
-                                  v-if="canCancelRequest(request)"
-                                  @click="handleCancelMenuAction(request)"
-                                  class="w-full px-4 py-3 text-left text-red-300 hover:bg-red-500/20 transition-colors flex items-center space-x-3"
-                                >
-                                  <i class="fas fa-times text-red-400 w-5"></i>
-                                  <span class="font-medium">Cancel Request</span>
-                                </button>
-                              </div>
                             </div>
                           </td>
                         </tr>
@@ -786,6 +748,47 @@
       @confirm="handleResubmitConfirm"
       @cancel="closeResubmitModal"
     />
+
+    <!-- Teleported Dropdown Menu -->
+    <Teleport to="body">
+      <div
+        v-if="activeMenuId !== null && getActiveRequest()"
+        class="fixed w-52 bg-slate-800 border-2 border-blue-400/40 rounded-xl shadow-2xl z-[99999] overflow-hidden"
+        :style="dropdownStyle"
+        @click.stop
+      >
+        <!-- View button -->
+        <button
+          @click="handleViewMenuAction(getActiveRequest())"
+          class="w-full px-4 py-3 text-left text-blue-300 hover:bg-blue-500/20 transition-colors flex items-center space-x-3 border-b border-blue-400/20"
+        >
+          <i class="fas fa-eye text-blue-400 w-5"></i>
+          <span class="font-medium">View Details</span>
+        </button>
+
+        <!-- Edit button (conditional) -->
+        <button
+          v-if="canEditRequest(getActiveRequest())"
+          @click="handleEditMenuAction(getActiveRequest())"
+          class="w-full px-4 py-3 text-left text-green-300 hover:bg-green-500/20 transition-colors flex items-center space-x-3 border-b border-blue-400/20"
+        >
+          <i class="fas fa-edit text-green-400 w-5"></i>
+          <span class="font-medium">
+            {{ getActiveRequest()?.status === 'cancelled' ? 'Edit & Resubmit' : 'Edit' }}
+          </span>
+        </button>
+
+        <!-- Cancel button (conditional) -->
+        <button
+          v-if="canCancelRequest(getActiveRequest())"
+          @click="handleCancelMenuAction(getActiveRequest())"
+          class="w-full px-4 py-3 text-left text-red-300 hover:bg-red-500/20 transition-colors flex items-center space-x-3"
+        >
+          <i class="fas fa-times text-red-400 w-5"></i>
+          <span class="font-medium">Cancel Request</span>
+        </button>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -837,6 +840,8 @@
 
       // Actions menu state
       const activeMenuId = ref(null)
+      const dropdownPosition = ref({ top: 0, left: 0 })
+      const buttonRefs = ref({})
 
       // Reactive data for requests
       const requests = ref([])
@@ -1485,9 +1490,59 @@
         )
       })
 
-      // Toggle actions menu
-      const toggleActionsMenu = (requestId) => {
-        activeMenuId.value = activeMenuId.value === requestId ? null : requestId
+      // Set button ref for dropdown positioning
+      const setButtonRef = (el, requestId) => {
+        if (el) {
+          buttonRefs.value[requestId] = el
+        }
+      }
+
+      // Get active request for dropdown
+      const getActiveRequest = () => {
+        if (!activeMenuId.value) return null
+        return requests.value.find((r) => r.id === activeMenuId.value)
+      }
+
+      // Computed dropdown style
+      const dropdownStyle = computed(() => {
+        return {
+          top: `${dropdownPosition.value.top}px`,
+          left: `${dropdownPosition.value.left}px`
+        }
+      })
+
+      // Toggle actions menu with position calculation
+      const toggleActionsMenu = (requestId, event) => {
+        if (activeMenuId.value === requestId) {
+          activeMenuId.value = null
+          return
+        }
+
+        activeMenuId.value = requestId
+
+        // Calculate position based on button click
+        if (event && event.target) {
+          const button = event.target.closest('button')
+          if (button) {
+            const rect = button.getBoundingClientRect()
+            const dropdownHeight = 150 // Approximate dropdown height
+            const dropdownWidth = 208 // 13rem = 208px
+
+            // Position above button if near bottom, otherwise below
+            let top = rect.bottom + 8
+            if (rect.bottom + dropdownHeight > window.innerHeight) {
+              top = rect.top - dropdownHeight - 8
+            }
+
+            // Ensure it doesn't go off the right edge
+            let left = rect.right - dropdownWidth
+            if (left < 16) {
+              left = 16
+            }
+
+            dropdownPosition.value = { top, left }
+          }
+        }
       }
 
       // Close actions menu
@@ -1633,6 +1688,9 @@
         showResubmitModal,
         selectedRequest,
         activeMenuId,
+        dropdownStyle,
+        setButtonRef,
+        getActiveRequest,
         approvalSteps,
         bookingSteps,
         loadRequests,
@@ -1762,5 +1820,10 @@
     .modal-overlay {
       padding: 0.5rem;
     }
+  }
+
+  /* Table layout */
+  .table-fixed {
+    table-layout: fixed;
   }
 </style>
