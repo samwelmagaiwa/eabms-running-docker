@@ -426,9 +426,15 @@ class RequestStatusController extends Controller
             'department' => $departmentName,
             'device_availability' => $deviceAvailabilityInfo,
             'return_status' => $normalizedReturnStatus,
-            // SMS status: for bookings we only track requester-level notifications
+            // SMS status tracking for bookings:
+            // - sms_to_ict_officers_status: tracks SMS sent to ICT officers when booking is created
+            // - sms_to_requester_status: tracks SMS sent to requester when booking is approved
+            'sms_to_ict_officers_status' => $booking->sms_to_ict_officers_status ?? 'pending',
             'sms_to_requester_status' => $booking->sms_to_requester_status ?? 'pending',
-            'sms_status' => $booking->sms_to_requester_status ?? 'pending',
+            // Show appropriate SMS status based on workflow stage:
+            // - If pending ICT approval: show ICT officers notification status
+            // - If approved/rejected: show requester notification status
+            'sms_status' => $this->getBookingSmsStatus($booking),
         ];
     }
 
@@ -811,6 +817,27 @@ class RequestStatusController extends Controller
             default:
                 return $booking->status;
         }
+    }
+
+    /**
+     * Get appropriate SMS status for booking based on workflow stage.
+     * 
+     * SMS Flow for bookings:
+     * 1. Staff submits booking → SMS sent to ICT Officers/Secretary ICT
+     * 2. ICT approves → SMS sent to requester to collect device
+     * 
+     * This method returns the SMS status that is most relevant to the current workflow stage.
+     */
+    private function getBookingSmsStatus(BookingService $booking): string
+    {
+        // If ICT has made a decision (approved or rejected), show requester SMS status
+        if (in_array($booking->ict_approve, ['approved', 'rejected'])) {
+            return $booking->sms_to_requester_status ?? 'pending';
+        }
+        
+        // If still pending ICT approval, show ICT officers notification status
+        // This is the SMS sent to ICT Officers when the booking was created
+        return $booking->sms_to_ict_officers_status ?? 'pending';
     }
 
     /**

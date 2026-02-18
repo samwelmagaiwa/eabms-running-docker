@@ -429,13 +429,17 @@ class BookingServiceController extends Controller
                         $bulkResult = $smsModule->sendBulkSms($phoneNumbers, $message, 'device_booking_pending');
                         $anySent = (($bulkResult['sent'] ?? 0) > 0);
 
-                        // Update normalized SMS status used by /request-status UI
-                        // For booking requests we only track a single requester-level SMS flag
-                        // (field is reused here to indicate that at least one notification SMS
-                        // about this booking has been sent successfully).
+                        // Update ICT Officers SMS status tracking (separate from requester SMS)
                         $booking->update([
-                            'sms_sent_to_requester_at' => $anySent ? now() : null,
-                            'sms_to_requester_status' => $anySent ? 'sent' : 'failed',
+                            'sms_sent_to_ict_officers_at' => $anySent ? now() : null,
+                            'sms_to_ict_officers_status' => $anySent ? 'sent' : 'failed',
+                        ]);
+                        
+                        Log::info('SMS sent to ICT Officers for new booking - requester will be notified upon approval', [
+                            'booking_id' => $booking->id,
+                            'ict_officers_notified' => $anySent,
+                            'sms_to_ict_officers_status' => $anySent ? 'sent' : 'failed',
+                            'recipients_count' => count($phoneNumbers)
                         ]);
 
                         Log::info('ICT Officers/Secretary ICT SMS dispatch result for booking', [

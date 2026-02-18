@@ -479,7 +479,7 @@
                         v-if="user.departments_as_hod && user.departments_as_hod.length > 0"
                         class="mt-2"
                       >
-                        <div class="text-base text-yellow-200 mb-1">Departments:</div>
+                      <div class="text-base text-yellow-200 mb-1">Head of Department:</div>
                         <div class="flex flex-wrap gap-1">
                           <span
                             v-for="dept in user.departments_as_hod"

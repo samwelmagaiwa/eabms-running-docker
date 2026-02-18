@@ -29,7 +29,7 @@ class UserRoleController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $query = User::with(['roles', 'departmentsAsHOD']);
+            $query = User::with(['roles', 'department', 'departmentsAsHOD']);
 
             // Search functionality
             if ($request->has('search') && $request->search) {
@@ -75,6 +75,14 @@ class UserRoleController extends Controller
                     'email' => $user->email,
                     'pf_number' => $user->pf_number,
                     'phone' => $user->phone,
+                    'is_active' => $user->is_active,
+                    'department_id' => $user->department_id,
+                    'department' => $user->department ? [
+                        'id' => $user->department->id,
+                        'name' => $user->department->name,
+                        'code' => $user->department->code,
+                        'display_name' => $user->department->getFullNameAttribute(),
+                    ] : null,
                     'created_at' => $user->created_at,
                     'roles' => $user->roles->map(function ($role) {
                         return [
@@ -414,6 +422,7 @@ class UserRoleController extends Controller
                 'password' => Hash::make($validated['password']),
                 'pf_number' => $validated['pf_number'] ?? null,
                 'phone' => $validated['phone'] ?? null,
+                'department_id' => $validated['department_id'] ?? null,
                 'is_active' => true,
             ]);
 

@@ -55,8 +55,10 @@ class BookingService extends Model
         'device_issued_at',
         'assessed_by',
         'assessment_notes',
-        // SMS notification tracking (only requester-level kept for bookings)
+        // SMS notification tracking
         'sms_notifications',
+        'sms_sent_to_ict_officers_at',
+        'sms_to_ict_officers_status',
         'sms_sent_to_requester_at',
         'sms_to_requester_status',
     ];
@@ -85,6 +87,8 @@ class BookingService extends Model
         'device_condition_receiving' => 'array',
         'device_condition_issuing' => 'array',
         'device_inventory_ids' => 'array',
+        'sms_sent_to_ict_officers_at' => 'datetime',
+        'sms_sent_to_requester_at' => 'datetime',
     ];
 
     /**
