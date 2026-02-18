@@ -5,14 +5,17 @@ namespace App\Listeners;
 use App\Events\ApprovalStatusChanged;
 use App\Events\ApprovalRequestSubmitted;
 use App\Services\SmsModule;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 
-class SendSmsNotification implements ShouldQueue
+/**
+ * SMS Notification Listener
+ * 
+ * This listener handles SMS notifications for approval requests.
+ * It runs synchronously to ensure SMS is sent immediately without
+ * requiring a queue worker to be running.
+ */
+class SendSmsNotification
 {
-    use InteractsWithQueue;
-
     protected $sms;
 
     /**

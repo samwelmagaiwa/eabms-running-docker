@@ -731,15 +731,25 @@ class SmsModule
             }
 
             // Prepare Kilakona payload
+            // Note: Kilakona API requires contacts as a STRING (not array)
             $payload = [
                 'senderId' => $this->senderId,
                 'messageType' => $this->messageType,
                 'message' => $message,
-                'contacts' => $phoneNumber,
+                'contacts' => $phoneNumber, // String format required by Kilakona
             ];
             if (!empty($this->deliveryReportUrl)) {
                 $payload['deliveryReportUrl'] = $this->deliveryReportUrl;
             }
+
+            // Log the full request for debugging
+            Log::info('SMS API Request', [
+                'api_url' => $this->apiUrl,
+                'phone' => substr($phoneNumber, 0, 6) . '***' . substr($phoneNumber, -2),
+                'message_length' => strlen($message),
+                'sender_id' => $this->senderId,
+                'has_delivery_url' => !empty($this->deliveryReportUrl),
+            ]);
 
             // Initialize cURL
             $ch = curl_init($this->apiUrl);
@@ -784,10 +794,17 @@ class SmsModule
                 return $this->buildResponse(false, 'HTTP Error: ' . $httpCode);
             }
 
+            // Log full response for debugging
+            Log::info('SMS API Response', [
+                'http_code' => $httpCode,
+                'response_raw' => substr($response, 0, 500), // First 500 chars
+                'phone' => substr($phoneNumber, 0, 6) . '***',
+            ]);
+
             // Decode JSON
             $data = json_decode($response, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
-                Log::error('SMS JSON Error', ['error' => json_last_error_msg()]);
+                Log::error('SMS JSON Error', ['error' => json_last_error_msg(), 'response' => $response]);
                 return $this->buildResponse(false, 'Invalid JSON response');
             }
 
