@@ -710,16 +710,14 @@ class AdminDepartmentController extends Controller
             
             $allUsers = $allUsersQuery->orderBy('name')->get();
 
-            // Filter HOD eligible users - ANY user is eligible except those already assigned
+            // Filter HOD eligible users - ANY user is eligible except those already assigned as HOD to another department
             $users = $allUsers->filter(function ($user) use ($departmentId) {
                 // Check if user is already assigned as HOD to another department
-                $isCurrentlyHod = $user->departmentsAsHOD->where('id', '!=', $departmentId)->isNotEmpty();
+                $isCurrentlyHodOfOther = $user->departmentsAsHOD->where('id', '!=', $departmentId)->isNotEmpty();
                 
-                // Check if user is already assigned as Divisional Director to any department
-                $isDivisionalDirector = $user->departmentsAsDivisionalDirector->isNotEmpty();
-                
-                // User is eligible if they are not currently assigned to other positions
-                return !$isCurrentlyHod && !$isDivisionalDirector;
+                // User is eligible if they are not currently assigned as HOD to a DIFFERENT department
+                // They CAN be a Divisional Director elsewhere or even for the same department
+                return !$isCurrentlyHodOfOther;
             })->map(function ($user) {
                 return [
                     'id' => $user->id,
@@ -790,16 +788,12 @@ class AdminDepartmentController extends Controller
             
             $allUsers = $allUsersQuery->orderBy('name')->get();
 
-            // Filter Divisional Director eligible users - ANY user is eligible except those already assigned
-            $users = $allUsers->filter(function ($user) use ($departmentId) {
                 // Check if user is already assigned as Divisional Director to another department
-                $isCurrentlyDirector = $user->departmentsAsDivisionalDirector->where('id', '!=', $departmentId)->isNotEmpty();
+                $isCurrentlyDirectorOfOther = $user->departmentsAsDivisionalDirector->where('id', '!=', $departmentId)->isNotEmpty();
                 
-                // Check if user is already assigned as HOD to any department
-                $isHod = $user->departmentsAsHOD->isNotEmpty();
-                
-                // User is eligible if they are not currently assigned to other positions
-                return !$isCurrentlyDirector && !$isHod;
+                // User is eligible if they are not currently assigned as Divisional Director to a DIFFERENT department
+                // They CAN be an HOD elsewhere or even for the same department
+                return !$isCurrentlyDirectorOfOther;
             })->map(function ($user) {
                 return [
                     'id' => $user->id,
@@ -830,7 +824,7 @@ class AdminDepartmentController extends Controller
                             'display_name' => $dept->getFullNameAttribute()
                         ];
                     }),
-                    'is_available' => $user->departmentsAsDivisionalDirector->where('id', '!=', $departmentId)->isEmpty() && $user->departmentsAsHOD->isEmpty(),
+                    'is_available' => $user->departmentsAsDivisionalDirector->where('id', '!=', $departmentId)->isEmpty(),
                     'display_name' => $user->name . ($user->pf_number ? " (PF: {$user->pf_number})" : '') . " - {$user->email}"
                 ];
             })->values();
@@ -870,16 +864,13 @@ class AdminDepartmentController extends Controller
             
             $allUsers = $allUsersQuery->orderBy('name')->get();
 
-            // Filter HOD eligible users - ANY user is eligible except those already assigned
+            // Filter HOD eligible users - ANY user is eligible except those already assigned as HOD to another department
             $hodUsers = $allUsers->filter(function ($user) use ($departmentId) {
                 // Check if user is already assigned as HOD to another department
-                $isCurrentlyHod = $user->departmentsAsHOD->where('id', '!=', $departmentId)->isNotEmpty();
+                $isCurrentlyHodOfOther = $user->departmentsAsHOD->where('id', '!=', $departmentId)->isNotEmpty();
                 
-                // Check if user is already assigned as Divisional Director to any department
-                $isDivisionalDirector = $user->departmentsAsDivisionalDirector->isNotEmpty();
-                
-                // User is eligible if they are not currently assigned to other positions
-                return !$isCurrentlyHod && !$isDivisionalDirector;
+                // User is eligible if they are not currently assigned as HOD to a DIFFERENT department
+                return !$isCurrentlyHodOfOther;
             })->map(function ($user) {
                 return [
                     'id' => $user->id,
@@ -914,16 +905,13 @@ class AdminDepartmentController extends Controller
                 ];
             })->values();
 
-            // Filter Divisional Director eligible users - ANY user is eligible except those already assigned
+            // Filter Divisional Director eligible users - ANY user is eligible except those already assigned as Divisional Director to another department
             $divisionalDirectorUsers = $allUsers->filter(function ($user) use ($departmentId) {
                 // Check if user is already assigned as Divisional Director to another department
-                $isCurrentlyDirector = $user->departmentsAsDivisionalDirector->where('id', '!=', $departmentId)->isNotEmpty();
+                $isCurrentlyDirectorOfOther = $user->departmentsAsDivisionalDirector->where('id', '!=', $departmentId)->isNotEmpty();
                 
-                // Check if user is already assigned as HOD to any department
-                $isHod = $user->departmentsAsHOD->isNotEmpty();
-                
-                // User is eligible if they are not currently assigned to other positions
-                return !$isCurrentlyDirector && !$isHod;
+                // User is eligible if they are not currently assigned as Divisional Director to a DIFFERENT department
+                return !$isCurrentlyDirectorOfOther;
             })->map(function ($user) {
                 return [
                     'id' => $user->id,
