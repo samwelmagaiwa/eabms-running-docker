@@ -1286,9 +1286,14 @@
 
         // If status is rejected or cancelled: show the requester notification status
         if (
-          ['rejected', 'hod_rejected', 'divisional_rejected', 'dict_rejected', 'dict_cancelled', 'cancelled'].includes(
-            status
-          )
+          [
+            'rejected',
+            'hod_rejected',
+            'divisional_rejected',
+            'dict_rejected',
+            'dict_cancelled',
+            'cancelled'
+          ].includes(status)
         ) {
           console.log('❌ Request rejected/cancelled - showing requester SMS status')
           return request.sms_to_requester_status || 'pending'
