@@ -1276,6 +1276,24 @@
         // For ICT Director: show SMS status for NEXT workflow step after their approval
         const status = request.ict_director_status || request.status
 
+        console.log('🔍 DICT SMS Status Check:', {
+          requestId: request.id,
+          status: status,
+          ict_director_status: request.ict_director_status,
+          sms_to_head_it_status: request.sms_to_head_it_status,
+          sms_to_requester_status: request.sms_to_requester_status
+        })
+
+        // If status is rejected or cancelled: show the requester notification status
+        if (
+          ['rejected', 'hod_rejected', 'divisional_rejected', 'dict_rejected', 'dict_cancelled', 'cancelled'].includes(
+            status
+          )
+        ) {
+          console.log('❌ Request rejected/cancelled - showing requester SMS status')
+          return request.sms_to_requester_status || 'pending'
+        }
+
         // If ICT Director has APPROVED: show Head of IT notification status
         if (
           status === 'ict_director_approved' ||
@@ -1284,11 +1302,12 @@
           status === 'head_it_approved' ||
           status === 'implemented'
         ) {
+          console.log('✅ DICT approved - showing Head of IT SMS status')
           return request.sms_to_head_it_status || 'pending'
         }
 
         // If PENDING ICT Director approval: return 'pending' (no action notification sent yet)
-        // Don't show sms_to_ict_director_status (that's the incoming notification)
+        console.log('⏳ Pending DICT action - returning pending')
         return 'pending'
       },
 

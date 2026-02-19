@@ -932,6 +932,19 @@
         // For Divisional Director: show SMS status for NEXT workflow step after their approval
         const status = request.divisional_status || request.status
 
+        // If status is rejected or cancelled: show the requester notification status
+        if (
+          [
+            'rejected',
+            'hod_rejected',
+            'divisional_rejected',
+            'dict_rejected',
+            'cancelled'
+          ].includes(status)
+        ) {
+          return request.sms_to_requester_status || 'pending'
+        }
+
         // If Divisional Director has APPROVED: show ICT Director notification status
         if (
           status === 'divisional_approved' ||
@@ -943,7 +956,6 @@
         }
 
         // If PENDING Divisional approval: return 'pending' (no action notification sent yet)
-        // Don't show sms_to_divisional_status (that's the incoming notification)
         return 'pending'
       },
 

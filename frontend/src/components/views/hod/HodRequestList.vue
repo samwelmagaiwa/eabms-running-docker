@@ -1014,6 +1014,20 @@
           sms_to_divisional_status: request.sms_to_divisional_status
         })
 
+        // If status is rejected or cancelled: show the requester notification status
+        if (
+          [
+            'rejected',
+            'hod_rejected',
+            'divisional_rejected',
+            'dict_rejected',
+            'cancelled'
+          ].includes(status)
+        ) {
+          console.log('❌ Request rejected/cancelled - showing requester SMS status')
+          return request.sms_to_requester_status || 'pending'
+        }
+
         // If HOD has APPROVED: show Divisional Director notification status (next in workflow)
         if (
           status === 'hod_approved' ||
@@ -1025,8 +1039,7 @@
           return request.sms_to_divisional_status || 'pending'
         }
 
-        // If PENDING HOD approval or any other state: return 'pending' (no action notification sent yet)
-        // Don't show sms_to_hod_status (that's the incoming notification)
+        // If PENDING HOD approval: return 'pending' (no action notification sent yet)
         console.log('⏳ Pending HOD action - returning pending')
         return 'pending'
       },

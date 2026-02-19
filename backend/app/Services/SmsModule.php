@@ -375,6 +375,9 @@ class SmsModule
             $result = $this->sendSms($phone, $message, 'rejection', $request->id, get_class($request));
             $results['requester_notified'] = (bool) ($result['success'] ?? false);
 
+            // Update SMS status tracking
+            $this->updateRequesterSmsStatus($request, $results['requester_notified']);
+
             Log::info('Request rejection SMS notification sent', [
                 'request_id' => $request->id,
                 'rejected_by' => $rejectedBy->id,
@@ -443,6 +446,9 @@ class SmsModule
             // Send SMS with reference for delivery tracking
             $result = $this->sendSms($phone, $message, 'cancellation', $request->id, get_class($request));
             $results['requester_notified'] = (bool) ($result['success'] ?? false);
+
+            // Update SMS status tracking
+            $this->updateRequesterSmsStatus($request, $results['requester_notified']);
 
             Log::info('Request cancellation SMS notification sent', [
                 'request_id' => $request->id,

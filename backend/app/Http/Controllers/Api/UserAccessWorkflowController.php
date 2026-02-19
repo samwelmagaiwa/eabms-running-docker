@@ -620,6 +620,21 @@ class UserAccessWorkflowController extends Controller
                 'cancelled_by' => auth()->id(),
                 'cancelled_at' => now()
             ]);
+
+            // Send SMS notification to requester about cancellation
+            try {
+                $sms = app(\App\Services\SmsModule::class);
+                $sms->notifyRequestCancelled(
+                    $userAccess,
+                    auth()->user(),
+                    $request->cancellation_reason
+                );
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::warning('Workflow cancellation SMS notification failed', [
+                    'request_id' => $userAccess->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
             
             return response()->json([
                 'success' => true,
