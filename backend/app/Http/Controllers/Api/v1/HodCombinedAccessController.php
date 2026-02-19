@@ -47,23 +47,14 @@ class HodCombinedAccessController extends Controller
 
             // DEPARTMENT FILTERING: HOD only sees requests from their department(s)
             $currentUser = auth()->user();
-            $hodDepartmentIds = $currentUser->departmentsAsHOD()->pluck('id')->toArray();
+            $hodDepartmentIds = $this->getHodDepartmentIds($currentUser);
             
             if (!empty($hodDepartmentIds)) {
                 $query->whereIn('department_id', $hodDepartmentIds);
                 Log::info('HOD Department Filter Applied', [
                     'user_id' => $currentUser->id,
                     'user_name' => $currentUser->name,
-                    'user_email' => $currentUser->email,
                     'hod_department_ids' => $hodDepartmentIds,
-                    'requests_before_dept_filter' => UserAccess::with(['user', 'department'])
-                        ->whereNotNull('request_type')
-                        ->where(function ($q) {
-                            $q->whereNull('hod_status')
-                                ->orWhere('hod_status', 'pending')
-                                ->orWhere('hod_status', 'approved')
-                                ->orWhere('hod_status', 'rejected');
-                        })->count(),
                     'requests_after_dept_filter' => (clone $query)->count()
                 ]);
             } else {
@@ -72,7 +63,6 @@ class HodCombinedAccessController extends Controller
                     'user_id' => $currentUser->id,
                     'user_name' => $currentUser->name,
                     'user_email' => $currentUser->email,
-                    'user_roles' => $currentUser->roles()->pluck('name')->toArray() ?? 'No roles loaded'
                 ]);
                 $query->whereRaw('1 = 0'); // This will return no results
             }
@@ -158,7 +148,7 @@ class HodCombinedAccessController extends Controller
 
             // DEPARTMENT AUTHORIZATION: Ensure HOD can only access requests from their department(s)
             $currentUser = auth()->user();
-            $hodDepartmentIds = $currentUser->departmentsAsHOD()->pluck('id')->toArray();
+            $hodDepartmentIds = $this->getHodDepartmentIds($currentUser);
             
             if (!empty($hodDepartmentIds) && !in_array($request->department_id, $hodDepartmentIds)) {
                 Log::warning('HOD Access Denied: Request not from HOD department', [
@@ -222,7 +212,7 @@ class HodCombinedAccessController extends Controller
 
             // DEPARTMENT AUTHORIZATION: Ensure HOD can only approve requests from their department(s)
             $currentUser = auth()->user();
-            $hodDepartmentIds = $currentUser->departmentsAsHOD()->pluck('id')->toArray();
+            $hodDepartmentIds = $this->getHodDepartmentIds($currentUser);
             
             if (!empty($hodDepartmentIds) && !in_array($userAccessRequest->department_id, $hodDepartmentIds)) {
                 Log::warning('HOD Approval Denied: Request not from HOD department', [
@@ -459,7 +449,7 @@ class HodCombinedAccessController extends Controller
 
             // Department authorization: HOD only for own departments
             $currentUser = auth()->user();
-            $hodDepartmentIds = $currentUser->departmentsAsHOD()->pluck('id')->toArray();
+            $hodDepartmentIds = $this->getHodDepartmentIds($currentUser);
             if (!empty($hodDepartmentIds) && !in_array($userAccessRequest->department_id, $hodDepartmentIds)) {
                 return response()->json([
                     'success' => false,
@@ -514,7 +504,7 @@ class HodCombinedAccessController extends Controller
 
             // DEPARTMENT FILTERING: HOD statistics only for their department(s)
             $currentUser = auth()->user();
-            $hodDepartmentIds = $currentUser->departmentsAsHOD()->pluck('id')->toArray();
+            $hodDepartmentIds = $this->getHodDepartmentIds($currentUser);
             
             $baseQuery = UserAccess::query();
             if (!empty($hodDepartmentIds)) {
@@ -699,7 +689,7 @@ class HodCombinedAccessController extends Controller
             }
 
             // DEPARTMENT AUTHORIZATION: Ensure HOD can only access requests from their department(s)
-            $userDepartments = $user->departmentsAsHOD()->pluck('id')->toArray();
+            $userDepartments = $this->getHodDepartmentIds($user);
 
             if (empty($userDepartments) || !in_array($request->department_id, $userDepartments)) {
                 return response()->json([
@@ -875,6 +865,22 @@ class HodCombinedAccessController extends Controller
                 'error' => app()->environment('local') ? $e->getMessage() : 'Internal server error'
             ], 500);
         }
+    }
+
+    /**
+     * Get the department IDs that this HOD user manages.
+     * Primary: departments where hod_user_id = user.id
+     * Fallback: the user's own department_id (when hod_user_id is not set on the department row)
+     */
+    private function getHodDepartmentIds($user): array
+    {
+        $ids = $user->departmentsAsHOD()->pluck('id')->toArray();
+
+        if (empty($ids) && $user->department_id) {
+            $ids = [$user->department_id];
+        }
+
+        return $ids;
     }
 
     /**

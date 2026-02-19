@@ -253,10 +253,14 @@ class DictCombinedAccessController extends Controller
             // Validate workflow state based on user role
             if ($isHeadOfIT) {
                 // Head of IT approval requirements
-                if ($userAccessRequest->hod_status !== 'approved' || 
-                    $userAccessRequest->divisional_status !== 'approved' ||
-                    $userAccessRequest->ict_director_status !== 'approved' ||
-                    $userAccessRequest->head_it_status !== 'pending') {
+                // Allow 'skipped' for hod and divisional (ICT Officer submissions skip HOD+Divisional;
+                // departments without a divisional director skip divisional)
+                $hodOk    = in_array($userAccessRequest->hod_status, ['approved', 'skipped'], true);
+                $divOk    = in_array($userAccessRequest->divisional_status, ['approved', 'skipped'], true);
+                $dictOk   = $userAccessRequest->ict_director_status === 'approved';
+                $headPend = $userAccessRequest->head_it_status === 'pending';
+
+                if (!$hodOk || !$divOk || !$dictOk || !$headPend) {
                         
                     Log::warning('Head of IT Approval Denied: Invalid approval workflow state', [
                         'request_id' => $id,

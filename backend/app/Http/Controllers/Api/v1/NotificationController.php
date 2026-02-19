@@ -72,20 +72,34 @@ class NotificationController extends Controller
                             // Count requests pending HOD approval (newly submitted) - optimized query
                             // Exclude requests that have been completed/implemented downstream
                             try {
-                                $pendingCount = UserAccess::where(function($q) {
-                                        $q->whereNull('hod_status')
-                                          ->orWhere('hod_status', 'pending');
-                                    })
-                                    ->whereNull('hod_approved_at')
-                                    // Exclude completed/implemented requests
-                                    ->where(function($q) {
-                                        $q->whereNull('ict_officer_status')
-                                          ->orWhereNotIn('ict_officer_status', ['implemented', 'completed']);
-                                    })
-                                    // Exclude cancelled requests
-                                    ->where('hod_status', '!=', 'cancelled')
-                                    ->selectRaw('COUNT(*) as count')
-                                    ->value('count') ?? 0;
+                                // Determine HOD department IDs (with fallback to user's own department)
+                                $hodDeptIds = $user->departmentsAsHOD()->pluck('id')->toArray();
+                                if (empty($hodDeptIds) && $user->department_id) {
+                                    $hodDeptIds = [$user->department_id];
+                                }
+
+                                if (!empty($hodDeptIds)) {
+                                    $pendingCount = UserAccess::whereIn('department_id', $hodDeptIds)
+                                        ->where(function($q) {
+                                            $q->whereNull('hod_status')
+                                              ->orWhere('hod_status', 'pending');
+                                        })
+                                        ->whereNull('hod_approved_at')
+                                        // Exclude completed/implemented requests
+                                        ->where(function($q) {
+                                            $q->whereNull('ict_officer_status')
+                                              ->orWhereNotIn('ict_officer_status', ['implemented', 'completed']);
+                                        })
+                                        // Exclude cancelled requests
+                                        ->where(function($q) {
+                                            $q->whereNull('hod_status')
+                                              ->orWhere('hod_status', '!=', 'cancelled');
+                                        })
+                                        ->selectRaw('COUNT(*) as count')
+                                        ->value('count') ?? 0;
+                                } else {
+                                    $pendingCount = 0;
+                                }
                             } catch (\Exception $dbError) {
                                 Log::error('NotificationController: Database error in HOD query', [
                                     'error' => $dbError->getMessage()
@@ -104,18 +118,29 @@ class NotificationController extends Controller
                         break;
 
                         case 'divisional_director':
-                            // Count requests pending Divisional Director approval (approved by HOD) - optimized
-                            $pendingCount = UserAccess::where('hod_status', 'approved')
-                                ->where('divisional_status', 'pending')
-                                ->whereNotNull('hod_approved_at')
-                                ->whereNull('divisional_approved_at')
-                                // Exclude completed/implemented requests
-                                ->where(function($q) {
-                                    $q->whereNull('ict_officer_status')
-                                      ->orWhereNotIn('ict_officer_status', ['implemented', 'completed']);
-                                })
-                                ->selectRaw('COUNT(*) as count')
-                                ->value('count') ?? 0;
+                            // Count requests pending Divisional Director approval (approved by HOD)
+                            // Filter by department: DD only sees their own departments
+                            $ddDeptIds = $user->departmentsAsDivisionalDirector()->pluck('id')->toArray();
+                            if (empty($ddDeptIds) && $user->department_id) {
+                                $ddDeptIds = [$user->department_id];
+                            }
+
+                            if (!empty($ddDeptIds)) {
+                                $pendingCount = UserAccess::whereIn('department_id', $ddDeptIds)
+                                    ->where('hod_status', 'approved')
+                                    ->where('divisional_status', 'pending')
+                                    ->whereNotNull('hod_approved_at')
+                                    ->whereNull('divisional_approved_at')
+                                    // Exclude completed/implemented requests
+                                    ->where(function($q) {
+                                        $q->whereNull('ict_officer_status')
+                                          ->orWhereNotIn('ict_officer_status', ['implemented', 'completed']);
+                                    })
+                                    ->selectRaw('COUNT(*) as count')
+                                    ->value('count') ?? 0;
+                            } else {
+                                $pendingCount = 0;
+                            }
                             
                             $details = [
                                 'role' => 'Divisional Director',
@@ -128,10 +153,11 @@ class NotificationController extends Controller
                             break;
 
                         case 'ict_director':
-                            // Count requests pending ICT Director approval (approved by Divisional Director) - optimized
-                            $pendingCount = UserAccess::where('divisional_status', 'approved')
+                            // Count requests pending ICT Director approval
+                            // Include both divisional-approved AND divisional-skipped requests
+                            $pendingCount = UserAccess::whereIn('hod_status', ['approved', 'skipped'])
+                                ->whereIn('divisional_status', ['approved', 'skipped'])
                                 ->where('ict_director_status', 'pending')
-                                ->whereNotNull('divisional_approved_at')
                                 ->whereNull('ict_director_approved_at')
                                 // Exclude completed/implemented requests
                                 ->where(function($q) {
@@ -144,7 +170,7 @@ class NotificationController extends Controller
                             $details = [
                                 'role' => 'ICT Director',
                                 'pending_stage' => 'ICT Director Approval',
-                                'description' => 'Divisional-approved requests awaiting your approval',
+                                'description' => 'Requests awaiting your approval',
                                 'breakdown' => [
                                     'ict_director_pending' => $pendingCount
                                 ]
