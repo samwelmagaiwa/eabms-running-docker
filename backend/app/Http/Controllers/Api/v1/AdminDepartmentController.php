@@ -787,7 +787,8 @@ class AdminDepartmentController extends Controller
             }
             
             $allUsers = $allUsersQuery->orderBy('name')->get();
-
+            // Filter Divisional Director eligible users - ANY user is eligible except those already assigned as Divisional Director to another department
+            $users = $allUsers->filter(function ($user) use ($departmentId) {
                 // Check if user is already assigned as Divisional Director to another department
                 $isCurrentlyDirectorOfOther = $user->departmentsAsDivisionalDirector->where('id', '!=', $departmentId)->isNotEmpty();
                 
