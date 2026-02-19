@@ -475,6 +475,14 @@ class NotificationController extends Controller
                         })->first();
                     }
 
+                    // Fallback 2: Role-based lookup (search for users with HOD role in this department)
+                    if (!$hod) {
+                        $hod = User::where('department_id', $accessRequest->department_id)
+                            ->whereHas('roles', function($q) {
+                                $q->where('name', 'head_of_department');
+                            })->first();
+                    }
+
                     if (!$hod || !$hod->phone) {
                         return response()->json([
                             'success' => false,
