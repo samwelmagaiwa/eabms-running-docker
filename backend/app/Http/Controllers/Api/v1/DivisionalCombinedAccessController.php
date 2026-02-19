@@ -256,13 +256,14 @@ class DivisionalCombinedAccessController extends Controller
 
             // Update the request - automatically capture authenticated user's name
             $currentUser = auth()->user();
+            
+            $finalStatus = $validatedData['divisional_status'] === 'approved' ? 'pending_ict_director' : 'divisional_rejected';
+
             $updateData = [
-                'status' => $validatedData['divisional_status'] === 'approved' ? 'divisional_approved' : 'divisional_rejected',
-                'divisional_status' => $validatedData['divisional_status'], // Set the new divisional_status column
-                'divisional_comments' => $validatedData['divisional_comments'] ?? '',
-                'divisional_name' => $currentUser->name, // Always use authenticated user's name
-                'divisional_approved_by' => $currentUser->id,
-                'divisional_approved_by_name' => $currentUser->name,
+                'status' => $finalStatus,
+                'divisional_status' => $validatedData['divisional_status'],
+                'divisional_director_comments' => $validatedData['divisional_comments'] ?? '',
+                'divisional_director_name' => $currentUser->name,
                 'divisional_approved_at' => now(),
                 'updated_at' => now()
             ];
@@ -314,7 +315,8 @@ class DivisionalCombinedAccessController extends Controller
 
             Log::info('Divisional Combined Access: Approval updated successfully', [
                 'request_id' => $id,
-                'status' => $validatedData['divisional_status']
+                'divisional_status' => $validatedData['divisional_status'],
+                'status' => $finalStatus
             ]);
 
             return response()->json([

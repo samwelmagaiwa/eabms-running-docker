@@ -250,16 +250,40 @@ class HodCombinedAccessController extends Controller
             DB::beginTransaction();
 
             // Update the request - automatically capture authenticated user's name
-            $currentUser = auth()->user();
-            $updateData = [
-                'hod_status' => $validatedData['hod_status'], // Set the hod_status column
-                'hod_comments' => $validatedData['hod_comments'] ?? '',
-                'hod_name' => $currentUser->name, // Always use authenticated user's name
-                'hod_approved_by' => $currentUser->id,
-                'hod_approved_by_name' => $currentUser->name,
-                'hod_approved_at' => now(),
-                'updated_at' => now()
-            ];
+        $currentUser = auth()->user();
+        
+        $divisionalStatus = 'pending';
+        $finalStatus = $validatedData['hod_status'] === 'approved' ? 'hod_approved' : 'hod_rejected';
+        
+        // Robust Divisional Director Lookup & Skip Logic
+        if ($validatedData['hod_status'] === 'approved') {
+            $dept = Department::find($userAccessRequest->department_id);
+            $divUser = $dept?->divisionalDirector;
+            if (!$divUser && $dept?->divisional_director_id) {
+                $divUser = User::find($dept->divisional_director_id);
+            }
+            
+            if (!$divUser) {
+                $divisionalStatus = 'skipped';
+                $finalStatus = 'pending_ict_director';
+                Log::info('HOD Approval: Skipping Divisional stage (no director found)', [
+                    'request_id' => $id,
+                    'department_id' => $userAccessRequest->department_id
+                ]);
+            }
+        }
+
+        $updateData = [
+            'status' => $finalStatus,
+            'hod_status' => $validatedData['hod_status'],
+            'divisional_status' => ($validatedData['hod_status'] === 'approved') ? $divisionalStatus : 'pending',
+            'hod_comments' => $validatedData['hod_comments'] ?? '',
+            'hod_name' => $currentUser->name,
+            'hod_approved_by' => $currentUser->id,
+            'hod_approved_by_name' => $currentUser->name,
+            'hod_approved_at' => now(),
+            'updated_at' => now()
+        ];
             
             // Add module form data if provided
             if (isset($validatedData['module_requested_for'])) {
@@ -290,18 +314,35 @@ class HodCombinedAccessController extends Controller
                 $sms = app(SmsModule::class);
                 
                 if ($validatedData['hod_status'] === 'approved') {
-                    // Get next approver (Divisional Director for this specific department)
-                    $department = $userAccessRequest->department;
-                    $nextApprover = $department && $department->divisional_director_id 
-                        ? User::find($department->divisional_director_id)
-                        : User::whereHas('roles', fn($q) => $q->where('name', 'divisional_director'))->first();
-                    
-                    $sms->notifyRequestApproved(
-                        $userAccessRequest,
-                        auth()->user(),
-                        'hod',
-                        $nextApprover
-                    );
+                // Determine who to notify next
+                $dept = Department::find($userAccessRequest->department_id);
+                $nextApprover = null;
+                $levelToNotify = 'hod'; // The level that just approved
+
+                if ($userAccessRequest->divisional_status === 'skipped') {
+                    // Skip to ICT Director
+                    $nextApprover = User::whereHas('roles', fn($q) => $q->where('name', 'ict_director'))->first();
+                    $levelToNotify = 'divisional'; // Pretend divisional approved so SMS goes to ICT Director
+                    Log::info('HOD Approval: Notifying ICT Director (Divisional skipped)', [
+                        'request_id' => $id
+                    ]);
+                } else {
+                    // Normal flow: notify Divisional Director
+                    $nextApprover = $dept?->divisionalDirector;
+                    if (!$nextApprover && $dept?->divisional_director_id) {
+                        $nextApprover = User::find($dept->divisional_director_id);
+                    }
+                    if (!$nextApprover) {
+                        $nextApprover = User::whereHas('roles', fn($q) => $q->where('name', 'divisional_director'))->first();
+                    }
+                }
+                
+                $sms->notifyRequestApproved(
+                    $userAccessRequest,
+                    auth()->user(),
+                    $levelToNotify,
+                    $nextApprover
+                );
                     
                     Log::info('HOD approval SMS notifications sent', [
                         'request_id' => $id,
@@ -577,8 +618,8 @@ class HodCombinedAccessController extends Controller
      */
     private function transformRequestData($request): array
     {
-            return [
-                'id' => $request->id,
+        return [
+            'id' => $request->id,
                 'user_id' => $request->user_id,
                 'request_id' => 'REQ-' . str_pad($request->id, 6, '0', STR_PAD_LEFT),
                 'pf_number' => $request->pf_number,

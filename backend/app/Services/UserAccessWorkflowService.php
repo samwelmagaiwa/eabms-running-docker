@@ -823,9 +823,12 @@ class UserAccessWorkflowService
                 
             case 'hod_approved':
             case 'pending_divisional':
-                // Get Divisional Directors
+                // Get Divisional Directors for the request's department
                 $divisionalDirectors = User::whereHas('roles', function ($query) {
                     $query->where('name', 'divisional_director');
+                })
+                ->whereHas('departmentsAsDivisionalDirector', function ($query) use ($userAccess) {
+                    $query->where('departments.id', $userAccess->department_id);
                 })
                 ->whereNotNull('phone')
                 ->get()

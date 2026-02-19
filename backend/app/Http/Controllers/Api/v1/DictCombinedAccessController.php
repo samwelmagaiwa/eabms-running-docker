@@ -350,7 +350,7 @@ class DictCombinedAccessController extends Controller
                 ];
                 
                 if ($approvalStatus === 'approved') {
-                    $updateData['status'] = 'head_it_approved';
+                    $updateData['status'] = 'pending_ict_officer';
                     $updateData['head_it_comments'] = $validatedData['head_it_comments'] ?? '';
                     // Advance to ICT Officer for implementation
                     $updateData['ict_officer_status'] = 'pending';
@@ -364,7 +364,7 @@ class DictCombinedAccessController extends Controller
                 // ICT Director approval logic
                 $approvalStatus = $validatedData['dict_status'];
                 $updateData = [
-                    'status' => $approvalStatus === 'approved' ? 'dict_approved' : 'dict_rejected',
+                    'status' => $approvalStatus === 'approved' ? 'pending_head_it' : 'ict_director_rejected',
                     'ict_director_status' => $approvalStatus,
                     'dict_name' => $currentUser->name,
                     'dict_approved_by' => $currentUser->id,

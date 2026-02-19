@@ -180,17 +180,19 @@ class SmsModule
 
         try {
             // 1. Notify the requester
-            $results['requester_notified'] = $this->notifyRequester($request, $approvalLevel);
+            $requesterResult = $this->notifyRequester($request, $approvalLevel);
+            $results['requester_notified'] = $requesterResult['success'];
             
-            // Update requester SMS status
-            $this->updateRequesterSmsStatus($request, $results['requester_notified']);
+            // Update requester SMS status using the specific status from the provider
+            $this->updateRequesterSmsStatus($request, $requesterResult['status'] ?? ($requesterResult['success'] ? 'sent' : 'failed'));
 
             // 2. Notify next approver if exists
             if ($nextApprover && $nextApprover->phone) {
-                $results['next_approver_notified'] = $this->notifyNextApprover($request, $nextApprover, $approvalLevel);
+                $nextResult = $this->notifyNextApprover($request, $nextApprover, $approvalLevel);
+                $results['next_approver_notified'] = $nextResult['success'];
                 
-                // Update next approver SMS status based on their level
-                $this->updateNextApproverSmsStatus($request, $approvalLevel, $results['next_approver_notified']);
+                // Update next approver SMS status using the specific status from the provider
+                $this->updateNextApproverSmsStatus($request, $approvalLevel, $nextResult['status'] ?? ($nextResult['success'] ? 'sent' : 'failed'));
             }
 
             Log::info('Approval SMS notifications sent', [
@@ -257,7 +259,11 @@ class SmsModule
             }
 
             // 2. Notify the staff (requester) that their request is being processed
-            $results['requester_notified'] = $this->notifyRequesterAssigned($request, $ictOfficer);
+            $requesterResult = $this->notifyRequesterAssigned($request, $ictOfficer);
+            $results['requester_notified'] = $requesterResult['success'];
+            
+            // Update requester SMS status
+            $this->updateRequesterSmsStatus($request, $requesterResult['status'] ?? ($requesterResult['success'] ? 'sent' : 'failed'));
 
             Log::info('ICT Officer assignment SMS notifications sent', [
                 'request_id' => $request->id,
@@ -279,7 +285,7 @@ class SmsModule
     /**
      * Notify requester that their request has been assigned to an ICT Officer for implementation
      */
-    protected function notifyRequesterAssigned($request, User $ictOfficer): bool
+    protected function notifyRequesterAssigned($request, User $ictOfficer): array
     {
         // Get phone number
         $phone = null;
@@ -297,7 +303,7 @@ class SmsModule
                 'request_id' => $request->id,
                 'user_id' => $request->user_id ?? null
             ]);
-            return false;
+            return ['success' => false, 'status' => 'failed'];
         }
 
         // Get requester name
@@ -314,7 +320,11 @@ class SmsModule
 
         // Send SMS with reference for delivery tracking
         $result = $this->sendSms($phone, $message, 'assignment_notification', $request->id, get_class($request));
-        return $result['success'];
+        
+        return [
+            'success' => $result['success'],
+            'status' => $result['data']['status_to_use'] ?? ($result['success'] ? 'sent' : 'failed')
+        ];
     }
 
     /**
@@ -375,8 +385,8 @@ class SmsModule
             $result = $this->sendSms($phone, $message, 'rejection', $request->id, get_class($request));
             $results['requester_notified'] = (bool) ($result['success'] ?? false);
 
-            // Update SMS status tracking
-            $this->updateRequesterSmsStatus($request, $results['requester_notified']);
+            // Update SMS status tracking using precise status
+            $this->updateRequesterSmsStatus($request, $result['data']['status_to_use'] ?? ($result['success'] ? 'sent' : 'failed'));
 
             Log::info('Request rejection SMS notification sent', [
                 'request_id' => $request->id,
@@ -447,8 +457,8 @@ class SmsModule
             $result = $this->sendSms($phone, $message, 'cancellation', $request->id, get_class($request));
             $results['requester_notified'] = (bool) ($result['success'] ?? false);
 
-            // Update SMS status tracking
-            $this->updateRequesterSmsStatus($request, $results['requester_notified']);
+            // Update SMS status tracking using precise status
+            $this->updateRequesterSmsStatus($request, $result['data']['status_to_use'] ?? ($result['success'] ? 'sent' : 'failed'));
 
             Log::info('Request cancellation SMS notification sent', [
                 'request_id' => $request->id,
@@ -576,6 +586,7 @@ class SmsModule
             // Send SMS with reference for delivery tracking
             $result = $this->sendSms($phone, $message, 'access_granted', $request->id, get_class($request));
             $results['requester_notified'] = (bool) ($result['success'] ?? false);
+            $smsStatus = $result['data']['status_to_use'] ?? ($result['success'] ? 'sent' : 'failed');
 
             // IMPORTANT: log the concrete failure reason (otherwise we only see requester_notified=false)
             if (!$results['requester_notified']) {
@@ -594,7 +605,7 @@ class SmsModule
             try {
                 $request->update([
                     'sms_sent_to_requester_at' => $results['requester_notified'] ? now() : null,
-                    'sms_to_requester_status' => $results['requester_notified'] ? 'sent' : 'failed'
+                    'sms_to_requester_status' => $smsStatus
                 ]);
             } catch (Exception $e) {
                 Log::error('Failed to update requester SMS status (access granted)', [
@@ -623,7 +634,7 @@ class SmsModule
     /**
      * Notify requester about approval
      */
-    protected function notifyRequester($request, string $approvalLevel): bool
+    protected function notifyRequester($request, string $approvalLevel): array
     {
         // Get phone number - prioritize from user relationship (users table)
         $phone = null;
@@ -648,7 +659,7 @@ class SmsModule
                 'user_id' => $request->user_id ?? null,
                 'checked_sources' => ['request.phone', 'request.phone_number', 'user.phone']
             ]);
-            return false;
+            return ['success' => false, 'status' => 'failed'];
         }
         
         Log::info('SMS phone number resolved', [
@@ -672,13 +683,17 @@ class SmsModule
 
         // Send SMS with reference for delivery tracking
         $result = $this->sendSms($phone, $message, 'approval', $request->id, get_class($request));
-        return $result['success'];
+        
+        return [
+            'success' => $result['success'],
+            'status' => $result['data']['status_to_use'] ?? ($result['success'] ? 'sent' : 'failed')
+        ];
     }
 
     /**
      * Notify next approver about pending request
      */
-    protected function notifyNextApprover($request, User $nextApprover, string $currentLevel): bool
+    protected function notifyNextApprover($request, User $nextApprover, string $currentLevel): array
     {
         // Get phone from users table
         if (!$nextApprover->phone) {
@@ -687,7 +702,7 @@ class SmsModule
                 'approver_name' => $nextApprover->name,
                 'approver_role' => $nextApprover->roles->pluck('name')->toArray() ?? []
             ]);
-            return false;
+            return ['success' => false, 'status' => 'failed'];
         }
         
         Log::info('Next approver phone number found', [
@@ -719,7 +734,11 @@ class SmsModule
 
         // Send SMS with reference for delivery tracking
         $result = $this->sendSms($nextApprover->phone, $message, 'approval_notification', $request->id, get_class($request));
-        return $result['success'];
+        
+        return [
+            'success' => $result['success'],
+            'status' => $result['data']['status_to_use'] ?? ($result['success'] ? 'sent' : 'failed')
+        ];
     }
 
     // ==================== API COMMUNICATION ====================
@@ -1135,12 +1154,13 @@ class SmsModule
     /**
      * Update requester SMS notification status
      */
-    protected function updateRequesterSmsStatus($request, bool $success): void
+    protected function updateRequesterSmsStatus($request, string $status): void
     {
         try {
+            $success = in_array($status, ['sent', 'test_mode', 'disabled']);
             $request->update([
                 'sms_sent_to_requester_at' => $success ? now() : null,
-                'sms_to_requester_status' => $success ? 'sent' : 'failed'
+                'sms_to_requester_status' => $status
             ]);
         } catch (Exception $e) {
             Log::error('Failed to update requester SMS status', [
@@ -1153,7 +1173,7 @@ class SmsModule
     /**
      * Update next approver SMS notification status based on approval level
      */
-    protected function updateNextApproverSmsStatus($request, string $approvalLevel, bool $success): void
+    protected function updateNextApproverSmsStatus($request, string $approvalLevel, string $status): void
     {
         try {
             $statusField = null;
@@ -1188,9 +1208,10 @@ class SmsModule
             }
 
             if ($statusField && $timestampField) {
+                $success = in_array($status, ['sent', 'test_mode', 'disabled']);
                 $request->update([
                     $timestampField => $success ? now() : null,
-                    $statusField => $success ? 'sent' : 'failed'
+                    $statusField => $status
                 ]);
             }
         } catch (Exception $e) {
