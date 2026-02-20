@@ -4680,7 +4680,7 @@
         if (!this.isReviewMode || !this.requestData) return false
 
         // Strict role check: If not an HOD, this section is never editable
-        if (!hodRoles.includes(userRole)) return false
+        if (!this.checkUserHasRole(hodRoles)) return false
 
         const status = this.requestData.status || 'pending'
         // HOD can edit only in these scenarios:
@@ -4844,7 +4844,7 @@
         const divisionalRoles = ['divisional_director']
 
         // Strict role check: If not a Divisional Director, this section is never editable
-        if (!divisionalRoles.includes(userRole)) return false
+        if (!this.checkUserHasRole(divisionalRoles)) return false
 
         // Normally editable if it's the current stage
         if (this.currentApprovalStage === 'divisional') return true
@@ -5025,10 +5025,10 @@
         if (!this.isReviewMode) return true // Allow in create/draft mode
 
         const userRole = (this.getUserRole() || '').toLowerCase().replace(/[\s-]+/g, '_')
-        const dictRoles = ['ict_director', 'director_ict']
+        const dictRoles = ['ict_director', 'director_ict', 'dict']
 
         // If not an ICT Director, this section is never editable for them
-        if (!dictRoles.includes(userRole)) return false
+        if (!this.checkUserHasRole(dictRoles)) return false
 
         // For ICT Directors, check if it's their stage
         if (this.currentApprovalStage === 'ict_director') return true
@@ -5059,7 +5059,7 @@
         const headItRoles = ['head_it', 'head_of_it']
 
         // Strict role check
-        if (!headItRoles.includes(userRole)) return false
+        if (!this.checkUserHasRole(headItRoles)) return false
 
         const currentStage = this.currentApprovalStage
         const result = currentStage === 'head_it'
@@ -5088,7 +5088,7 @@
         const ictOfficerRoles = ['ict_officer', 'officer_ict']
 
         // Strict role check
-        if (!ictOfficerRoles.includes(userRole)) return false
+        if (!this.checkUserHasRole(ictOfficerRoles)) return false
 
         // Check if request is in a state that allows ICT Officer implementation
         const status = this.requestData?.status || ''
@@ -6409,6 +6409,30 @@
       }
     },
     methods: {
+      checkUserHasRole(roles) {
+        if (!this.currentUser) return false
+        const searchRoles = Array.isArray(roles) ? roles : [roles]
+        
+        // Check roles array from backend
+        if (Array.isArray(this.currentUser.roles)) {
+          const userRoleNames = this.currentUser.roles.map(r => 
+            (typeof r === 'string' ? r : r.name).toLowerCase().replace(/[\s-]+/g, '_')
+          )
+          if (searchRoles.some(role => userRoleNames.includes(role.toLowerCase().replace(/[\s-]+/g, '_')))) {
+            return true
+          }
+        }
+        
+        // Check single role properties
+        const singleRole = (
+          this.currentUser.role || 
+          this.currentUser.user_role || 
+          this.currentUser.primary_role || 
+          ''
+        ).toLowerCase().replace(/[\s-]+/g, '_')
+        
+        return searchRoles.some(role => singleRole === role.toLowerCase().replace(/[\s-]+/g, '_'))
+      },
       formatDateTime(ts) {
         try {
           const d = typeof ts === 'string' ? new Date(ts) : ts
