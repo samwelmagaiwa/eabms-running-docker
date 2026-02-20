@@ -1259,8 +1259,10 @@
         } else if (status === 'skipped' && (stage === 'divisional' || stage === 'hod')) {
           // Stage intentionally skipped (e.g., ICT Officer-origin request)
           // BUT check if it's actionable by the current user (e.g., HOD or Divisional Director correcting a skip)
-          if ((stage === 'divisional' && this.isDivisionalApprovalEditable) ||
-              (stage === 'hod' && this.isHodApprovalEditable)) {
+          if (
+            (stage === 'divisional' && this.isDivisionalApprovalEditable) ||
+            (stage === 'hod' && this.isHodApprovalEditable)
+          ) {
             result = { status: 'active', label: 'Pending' }
           } else {
             result = { status: 'completed', label: 'Skipped' }
