@@ -968,5 +968,4 @@ class HodCombinedAccessController extends Controller
         
         return $statusMap[$status] ?? ucfirst($status);
     }
-    }
 }

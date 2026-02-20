@@ -942,5 +942,4 @@ class UserAccessWorkflowService
         
         return implode(', ', $types) ?: 'System Access';
     }
-    }
 }
