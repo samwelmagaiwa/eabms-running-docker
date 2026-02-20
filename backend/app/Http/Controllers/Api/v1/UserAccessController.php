@@ -430,21 +430,35 @@ class UserAccessController extends Controller
             $initialStatus = $isIctOfficer ? 'pending_ict_director' : 'pending';
             $initialHod = $isIctOfficer ? 'skipped' : 'pending';
             
-            // Check for Divisional Director - only skip if truly missing
-            $initialDiv = $isIctOfficer ? 'skipped' : 'pending';
-            if (!$isIctOfficer) {
-                $deptRef = Department::find($validatedData['department_id']);
-                $divUserRef = $deptRef?->divisionalDirector;
-                if (!$divUserRef && $deptRef?->divisional_director_id) {
+            // Fetch department reference to check configuration
+            $deptRef = Department::find($validatedData['department_id']);
+            
+            // Check for Divisional Director presence/configuration
+            // Logic: If department is marked as 'has_divisional_director' OR has a 'divisional_director_id', we stay 'pending'
+            // even if the director user is missing (forces admin correction).
+            // This applies to both normal staff and ICT Officers.
+            if ($deptRef?->has_divisional_director || $deptRef?->divisional_director_id) {
+                $initialDiv = 'pending';
+                
+                // Log warning if config says 'yes' but no user is found
+                $divUserRef = $deptRef->divisionalDirector;
+                if (!$divUserRef && $deptRef->divisional_director_id) {
                     $divUserRef = User::find($deptRef->divisional_director_id);
                 }
                 
                 if (!$divUserRef) {
-                    $initialDiv = 'skipped';
-                    Log::info('Divisional stage skipped: No divisional director found', [
-                        'department_id' => $validatedData['department_id']
+                    Log::warning('Divisional director not found but department is marked as having one or has an ID assigned', [
+                        'department_id' => $validatedData['department_id'],
+                        'divisional_director_id' => $deptRef->divisional_director_id,
+                        'is_ict_officer' => $isIctOfficer
                     ]);
                 }
+            } else {
+                $initialDiv = 'skipped';
+                Log::info('Divisional stage skipped: Department not configured for divisional approval', [
+                    'department_id' => $validatedData['department_id'],
+                    'is_ict_officer' => $isIctOfficer
+                ]);
             }
 
             // Create the combined access request - store multiple services in one row
