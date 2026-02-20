@@ -764,6 +764,7 @@ class DictCombinedAccessController extends Controller
             'head_it_name' => $request->head_it_name ?? '',
             'head_it_pf_number' => $request->resolveApproverPfNumber($request->head_it_name),
             'head_it_approved_at' => $request->head_it_approved_at,
+            'ict_officer_pf_number' => $request->resolveApproverPfNumber($request->ict_officer_name),
             
             // Approval workflow status with visual indicators
             'hod_approval_status' => $this->getApprovalStatus($request, 'hod'),

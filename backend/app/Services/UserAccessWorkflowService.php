@@ -793,34 +793,34 @@ class UserAccessWorkflowService
             
             // HOD Approval
             'hod_name' => $request->hod_name,
-            'hod_pf_number' => $this->resolveApproverPfNumber($request, $request->hod_name),
+            'hod_pf_number' => $request->resolveApproverPfNumber($request->hod_name),
             'hod_comments' => $request->hod_comments,
             'hod_approved_at' => $request->hod_approved_at?->format('Y-m-d H:i:s'),
             
             // Divisional Director
             'divisional_director_name' => $request->divisional_director_name,
-            'divisional_pf_number' => $this->resolveApproverPfNumber($request, $request->divisional_director_name),
+            'divisional_pf_number' => $request->resolveApproverPfNumber($request->divisional_director_name),
             'divisional_director_signature_path' => $request->divisional_director_signature_path,
             'divisional_director_comments' => $request->divisional_director_comments,
             'divisional_approved_at' => $request->divisional_approved_at?->format('Y-m-d H:i:s'),
             
             // ICT Director
             'ict_director_name' => $request->ict_director_name,
-            'ict_director_pf_number' => $this->resolveApproverPfNumber($request, $request->ict_director_name),
+            'ict_director_pf_number' => $request->resolveApproverPfNumber($request->ict_director_name),
             'ict_director_signature_path' => $request->ict_director_signature_path,
             'ict_director_comments' => $request->ict_director_comments,
             'ict_director_approved_at' => $request->ict_director_approved_at?->format('Y-m-d H:i:s'),
             
             // Head IT
             'head_it_name' => $request->head_it_name,
-            'head_it_pf_number' => $this->resolveApproverPfNumber($request, $request->head_it_name),
+            'head_it_pf_number' => $request->resolveApproverPfNumber($request->head_it_name),
             'head_it_signature_path' => $request->head_it_signature_path,
             'head_it_comments' => $request->head_it_comments,
             'head_it_approved_at' => $request->head_it_approved_at?->format('Y-m-d H:i:s'),
             
             // ICT Officer
             'ict_officer_name' => $request->ict_officer_name,
-            'ict_officer_pf_number' => $this->resolveApproverPfNumber($request, $request->ict_officer_name),
+            'ict_officer_pf_number' => $request->resolveApproverPfNumber($request->ict_officer_name),
             'ict_officer_signature_path' => $request->ict_officer_signature_path,
             'ict_officer_comments' => $request->ict_officer_comments,
             'ict_officer_implemented_at' => $request->ict_officer_implemented_at?->format('Y-m-d H:i:s'),
@@ -942,32 +942,5 @@ class UserAccessWorkflowService
         
         return implode(', ', $types) ?: 'System Access';
     }
-    /**
-     * Resolve PF number for an approver name by checking signatures or profile data
-     */
-    private function resolveApproverPfNumber(UserAccess $request, ?string $stageApproverName): ?string
-    {
-        if (!$stageApproverName || $stageApproverName === 'N/A') {
-            return null;
-        }
-
-        try {
-            // 1. Try to find via signatures relationship
-            $signature = $request->signatures()
-                ->whereHas('user', function ($q) use ($stageApproverName) {
-                    $q->where('name', $stageApproverName);
-                })->with('user')->first();
-
-            if ($signature && $signature->user) {
-                return $signature->user->pf_number;
-            }
-
-            // 2. Fallback: Search user by name directly
-            $user = \App\Models\User::where('name', $stageApproverName)->first();
-            return $user ? $user->pf_number : null;
-        } catch (\Exception $e) {
-            \Log::warning('Error resolving approver PF number in WorkflowService: ' . $e->getMessage());
-            return null;
-        }
     }
 }

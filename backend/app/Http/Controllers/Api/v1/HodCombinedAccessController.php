@@ -769,7 +769,7 @@ class HodCombinedAccessController extends Controller
                     'stage' => 'HOD Approval',
                     'status' => $request->hod_status,
                     'approver_name' => $request->hod_name ?? 'N/A',
-                    'approver_pf_number' => $this->resolveApproverPfNumber($request, $request->hod_name),
+                    'approver_pf_number' => $request->resolveApproverPfNumber($request->hod_name),
                     'comments' => $request->hod_comments ?? '',
                     'timestamp' => $request->hod_approved_at,
                     'order' => 1
@@ -782,7 +782,7 @@ class HodCombinedAccessController extends Controller
                     'stage' => 'Divisional Director Approval',
                     'status' => $request->divisional_status,
                     'approver_name' => $request->divisional_director_name ?? ($request->divisional_name ?? 'N/A'),
-                    'approver_pf_number' => $this->resolveApproverPfNumber($request, $request->divisional_director_name ?? $request->divisional_name),
+                    'approver_pf_number' => $request->resolveApproverPfNumber($request->divisional_director_name ?? $request->divisional_name),
                     'comments' => $request->divisional_director_comments ?? ($request->divisional_comments ?? ''),
                     'timestamp' => $request->divisional_approved_at,
                     'order' => 2
@@ -795,7 +795,7 @@ class HodCombinedAccessController extends Controller
                     'stage' => 'ICT Director Approval',
                     'status' => $request->ict_director_status,
                     'approver_name' => $request->ict_director_name ?? 'N/A',
-                    'approver_pf_number' => $this->resolveApproverPfNumber($request, $request->ict_director_name),
+                    'approver_pf_number' => $request->resolveApproverPfNumber($request->ict_director_name),
                     'comments' => $request->ict_director_comments ?? '',
                     'timestamp' => $request->ict_director_approved_at,
                     'order' => 3
@@ -808,7 +808,7 @@ class HodCombinedAccessController extends Controller
                     'stage' => 'Head of IT Approval',
                     'status' => $request->head_it_status,
                     'approver_name' => $request->head_it_name ?? 'N/A',
-                    'approver_pf_number' => $this->resolveApproverPfNumber($request, $request->head_it_name),
+                    'approver_pf_number' => $request->resolveApproverPfNumber($request->head_it_name),
                     'comments' => $request->head_it_comments ?? '',
                     'timestamp' => $request->head_it_approved_at,
                     'order' => 4
@@ -821,7 +821,7 @@ class HodCombinedAccessController extends Controller
                     'stage' => 'ICT Officer Processing',
                     'status' => $request->ict_officer_status,
                     'approver_name' => $request->ict_officer_name ?? 'N/A',
-                    'approver_pf_number' => $this->resolveApproverPfNumber($request, $request->ict_officer_name),
+                    'approver_pf_number' => $request->resolveApproverPfNumber($request->ict_officer_name),
                     'comments' => $request->ict_officer_comments ?? '',
                     'timestamp' => $request->ict_officer_approved_at,
                     'order' => 5
@@ -968,34 +968,5 @@ class HodCombinedAccessController extends Controller
         
         return $statusMap[$status] ?? ucfirst($status);
     }
-    /**
-     * Resolve PF number for an approver name by checking signatures or profile data
-     */
-    private function resolveApproverPfNumber($request, $stageApproverName)
-    {
-        if (!$stageApproverName || $stageApproverName === 'N/A') {
-            return null;
-        }
-
-        try {
-            // 1. Try to find via signatures relationship if it exists
-            if (method_exists($request, 'signatures')) {
-                $signature = $request->signatures()
-                    ->whereHas('user', function ($q) use ($stageApproverName) {
-                        $q->where('name', $stageApproverName);
-                    })->with('user')->first();
-
-                if ($signature && $signature->user) {
-                    return $signature->user->pf_number;
-                }
-            }
-
-            // 2. Fallback: Search user by name directly
-            $user = \App\Models\User::where('name', $stageApproverName)->first();
-            return $user ? $user->pf_number : null;
-        } catch (\Exception $e) {
-            Log::warning('Error resolving approver PF number: ' . $e->getMessage());
-            return null;
-        }
     }
 }
