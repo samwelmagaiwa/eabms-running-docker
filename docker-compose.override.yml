@@ -32,6 +32,7 @@ services:
 
 
   db:
+    image: mysql:8.0
     container_name: eabms_db_local
     environment:
       MYSQL_DATABASE: backend-api-vue
