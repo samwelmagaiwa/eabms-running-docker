@@ -80,7 +80,7 @@ COPY backend/ .
 COPY --from=builder /var/www/vendor ./vendor
 
 # Copy built frontend from frontend-builder stage
-COPY --from=frontend-builder /app/dist ./public
+COPY --from=frontend-builder /app/dist ./public_image
 
 # Copy PHP extensions from builder stage
 COPY --from=builder /usr/local/lib/php/extensions /usr/local/lib/php/extensions

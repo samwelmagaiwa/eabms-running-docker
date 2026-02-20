@@ -67,6 +67,7 @@ services:
     volumes:
       - ./backend/storage:/var/www/storage
       - ./backend/bootstrap/cache:/var/www/bootstrap/cache
+      - frontend_assets:/var/www/public
     networks:
       - eabms_network
 
@@ -79,11 +80,14 @@ services:
     volumes:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./backend/storage:/var/www/storage:ro
-      - ./backend/public:/var/www/public:ro
+      - frontend_assets:/var/www/public:ro
     depends_on:
       - backend
     networks:
       - eabms_network
+
+volumes:
+  frontend_assets:
 
 networks:
   eabms_network:

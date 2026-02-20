@@ -9,6 +9,17 @@ mkdir -p /var/www/storage/framework/{sessions,views,cache/data}
 mkdir -p /var/www/storage/logs
 mkdir -p /var/www/bootstrap/cache
 
+echo "Synchronizing frontend assets to shared volume..."
+if [ -d "/var/www/public_image" ]; then
+    # Create public directory if it doesn't exist (e.g. fresh volume)
+    mkdir -p /var/www/public
+    # Synchronize files from image to volume
+    cp -r /var/www/public_image/. /var/www/public/
+    echo "Frontend assets synchronized successfully"
+else
+    echo "Notice: /var/www/public_image not found (likely dev environment), skipping sync"
+fi
+
 # Create storage symlink if it doesn't exist
 if [ ! -L /var/www/public/storage ]; then
     echo "Creating storage symlink..."
