@@ -4697,7 +4697,13 @@
           'ict_officer_rejected' // Rejected by ICT Officer - back to HOD
         ]
 
-        const canEdit = hodEditableStatuses.includes(status)
+        let canEdit = hodEditableStatuses.includes(status)
+
+        // Fix for incorrectly skipped stages
+        // If it's a new request and marked as skipped (and not yet signed), allow HOD to sign
+        if (!canEdit && this.isHodSkipped && !this.requestData.hod_approved_at) {
+          canEdit = true
+        }
 
         // Reduced debug logging frequency to improve performance
         if (this.isDevelopment && Math.random() < 0.1) {
@@ -4827,29 +4833,6 @@
           'ict_director',
           'dict'
         ].includes(role)
-      },
-
-      isHodApprovalEditable() {
-        // Active for HOD users while reviewing at the HOD stage
-        // OR when the stage was incorrectly skipped but they need to sign it
-        if (!this.isReviewMode || !this.requestData) return false
-
-        const userRole = (this.getUserRole() || '').toLowerCase().replace(/[\s-]+/g, '_')
-        const hodRoles = ['head_of_department', 'hod']
-
-        // Strict role check: If not an HOD, this section is never editable
-        if (!hodRoles.includes(userRole)) return false
-
-        // Normally editable if it's the current stage
-        if (this.currentApprovalStage === 'hod') return true
-
-        // Fix for incorrectly skipped stages
-        // If it's a new request and marked as skipped, allow HOD to sign
-        if (this.isHodSkipped && !this.requestData.hod_approved_at) {
-          return true
-        }
-
-        return false
       },
 
       isDivisionalApprovalEditable() {
