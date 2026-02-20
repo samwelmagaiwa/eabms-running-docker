@@ -428,7 +428,17 @@ class UserAccessController extends Controller
             }
 
             $initialStatus = $isIctOfficer ? 'pending_ict_director' : 'pending';
-            $initialHod = $isIctOfficer ? 'skipped' : 'pending';
+            
+            // Dynamic HOD detection: Skip if user is ICT Officer OR if department has no HOD user
+            $deptRef = Department::find($validatedData['department_id']);
+            $initialHod = ($isIctOfficer || !$deptRef?->hod_user_id) ? 'skipped' : 'pending';
+
+            if ($initialHod === 'skipped' && !$isIctOfficer) {
+                Log::info('HOD stage skipped: Department has no HOD user assigned', [
+                    'department_id' => $validatedData['department_id'],
+                    'department_name' => $deptRef?->name
+                ]);
+            }
             
             // Fetch department reference to check configuration
             $deptRef = Department::find($validatedData['department_id']);

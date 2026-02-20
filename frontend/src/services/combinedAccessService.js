@@ -578,26 +578,31 @@ class CombinedAccessService {
             if (stageName.includes('hod')) {
               request.hod_status = s.status
               request.hod_name = s.approver_name
+              request.hod_pf_number = s.approver_pf_number
               request.hod_comments = s.comments
               request.hod_approved_at = s.timestamp
             } else if (stageName.includes('divisional')) {
               request.divisional_status = s.status
               request.divisional_director_name = s.approver_name
+              request.divisional_pf_number = s.approver_pf_number
               request.divisional_director_comments = s.comments
               request.divisional_approved_at = s.timestamp
             } else if (stageName.includes('ict director')) {
               request.ict_director_status = s.status
               request.ict_director_name = s.approver_name
+              request.ict_director_pf_number = s.approver_pf_number
               request.ict_director_comments = s.comments
               request.ict_director_approved_at = s.timestamp
             } else if (stageName.includes('head of it')) {
               request.head_it_status = s.status
               request.head_it_name = s.approver_name
+              request.head_it_pf_number = s.approver_pf_number
               request.head_it_comments = s.comments
               request.head_it_approved_at = s.timestamp
             } else if (stageName.includes('ict officer')) {
               request.ict_officer_status = s.status
               request.ict_officer_name = s.approver_name
+              request.ict_officer_pf_number = s.approver_pf_number
               request.ict_officer_comments = s.comments
               request.ict_officer_approved_at = s.timestamp
             }

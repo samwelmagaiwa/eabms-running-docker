@@ -295,6 +295,36 @@ class UserAccess extends Model
     }
 
     /**
+     * Resolve PF number for an approver name by checking signatures or profile data
+     */
+    public function resolveApproverPfNumber(?string $stageApproverName): ?string
+    {
+        if (!$stageApproverName || $stageApproverName === 'N/A' || empty($stageApproverName)) {
+            return null;
+        }
+
+        return \Cache::remember("user_pf.{$stageApproverName}", 3600, function() use ($stageApproverName) {
+            try {
+                // 1. Try to find via signatures relationship
+                $signature = $this->signatures()
+                    ->whereHas('user', function ($q) use ($stageApproverName) {
+                        $q->where('name', $stageApproverName);
+                    })->with('user')->first();
+
+                if ($signature && $signature->user) {
+                    return $signature->user->pf_number;
+                }
+
+                // 2. Fallback: Search user by name directly
+                $user = \App\Models\User::where('name', $stageApproverName)->first();
+                return $user ? $user->pf_number : null;
+            } catch (\Exception $e) {
+                return null;
+            }
+        });
+    }
+
+    /**
      * Check if Divisional Director has approved this request.
      */
     public function isDivisionalDirectorApproved(): bool

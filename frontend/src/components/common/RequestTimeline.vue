@@ -229,13 +229,18 @@
                       }}</span>
                     </div>
 
-                    <div v-if="step.comments" class="flex items-start gap-2">
+                    <div v-if="step.pfNumber" class="flex items-center gap-2">
+                      <span class="font-medium text-white w-28 text-xs">PF Number:</span>
+                      <span class="text-xs text-white">{{ step.pfNumber }}</span>
+                    </div>
+
+                    <div v-if="step.id !== 'submission'" class="flex items-start gap-2">
                       <span class="font-medium text-white w-28 flex-shrink-0 text-xs"
                         >Comments:</span
                       >
                       <span
                         class="text-white text-xs leading-relaxed whitespace-pre-wrap break-words"
-                        >{{ step.comments }}</span
+                        >{{ step.comments || '—' }}</span
                       >
                     </div>
 
@@ -244,10 +249,12 @@
                       v-if="
                         (step.id === 'divisional' &&
                           (timelineData?.request?.divisional_status === 'skipped' ||
-                            step.statusLabel === 'Skipped')) ||
+                            step.statusLabel === 'Skipped') &&
+                          !isDivisionalApprovalEditable) ||
                         (step.id === 'hod' &&
                           (timelineData?.request?.hod_status === 'skipped' ||
-                            step.statusLabel === 'Skipped'))
+                            step.statusLabel === 'Skipped') &&
+                          !isHodApprovalEditable)
                       "
                       class="flex items-center gap-2"
                     >
@@ -684,6 +691,76 @@
         return canUpdate
       },
 
+      isHodApprovalEditable() {
+        // Similar logic to both-service-form.vue
+        const request = this.timelineData?.request || this.timelineData?.request_info
+        if (!request) return false
+
+        // ROLE CHECK: Strict check for HOD
+        if (!this.isHeadOfDepartment) return false
+
+        // Normally actionable if current stage is hod
+        if (this.currentApprovalStage === 'hod') return true
+
+        // ACTIONABLE SKIP CHECK:
+        // If it's currently marked as skipped but not yet approved
+        const isHodSkipped = (request.hod_status || '').toLowerCase() === 'skipped'
+        const isHodApproved = !!request.hod_approved_at || request.hod_status === 'approved'
+
+        if (isHodSkipped && !isHodApproved) {
+          return true
+        }
+
+        return false
+      },
+
+      isDivisionalApprovalEditable() {
+        // Similar logic to both-service-form.vue
+        const request = this.timelineData?.request || this.timelineData?.request_info
+        if (!request) return false
+
+        // ROLE CHECK: Strict check for Divisional Director
+        if (!this.isDivisionalDirector) return false
+
+        // Normally actionable if current stage is divisional
+        if (this.currentApprovalStage === 'divisional') return true
+
+        // ACTIONABLE SKIP CHECK:
+        // If HOD has approved and it's currently marked as skipped,
+        // it's actionable for the Divisional Director to corrective sign.
+        const hodStatus = (request.hod_status || '').toLowerCase()
+        const isDivSkipped = request.divisional_status === 'skipped'
+        const isDivApproved =
+          !!request.divisional_approved_at || request.divisional_status === 'approved'
+
+        if (hodStatus === 'approved' && isDivSkipped && !isDivApproved) {
+          return true
+        }
+
+        return false
+      },
+
+      currentApprovalStage() {
+        const request = this.timelineData?.request || this.timelineData?.request_info
+        if (!request) return null
+
+        const status = (request.status || '').toLowerCase()
+        if (status === 'pending' || status === 'pending_hod') return 'hod'
+        if (status === 'hod_approved' || status === 'pending_divisional') return 'divisional'
+        if (status === 'divisional_approved' || status === 'pending_ict_director')
+          return 'ict_director'
+        if (status === 'ict_director_approved' || status === 'pending_head_it') return 'head_it'
+        if (
+          status === 'head_it_approved' ||
+          status === 'pending_ict_officer' ||
+          status === 'assigned_to_ict' ||
+          status === 'implementation_in_progress'
+        )
+          return 'ict_officer'
+
+        return 'completed'
+      },
+
       timelineSteps() {
         if (!this.timelineData) return []
 
@@ -699,6 +776,7 @@
           status: 'completed',
           statusLabel: 'Completed',
           actor: request.staff_name,
+          pfNumber: request.pf_number,
           position: 'Requester',
           timestamp: request.created_at,
           comments: null,
@@ -724,6 +802,7 @@
           status: hodStatus.status,
           statusLabel: hodStatus.label,
           actor: hodActor,
+          pfNumber: request.hod_pf_number,
           position: 'Head of Department',
           timestamp: hodTimestamp,
           comments: request.hod_comments,
@@ -752,6 +831,7 @@
           status: divStatus.status,
           statusLabel: divStatus.label,
           actor: divisionalActor,
+          pfNumber: request.divisional_pf_number,
           position: 'Divisional Director',
           timestamp: divisionalTimestamp,
           comments: divisionalComments,
@@ -779,6 +859,7 @@
           status: ictDirStatus.status,
           statusLabel: ictDirStatus.label,
           actor: ictDirectorActor,
+          pfNumber: request.ict_director_pf_number,
           position: 'ICT Director',
           timestamp: ictDirectorTimestamp,
           comments: ictDirectorComments,
@@ -807,6 +888,7 @@
           status: headItStatus.status,
           statusLabel: headItStatus.label,
           actor: headItActor,
+          pfNumber: request.head_it_pf_number,
           position: 'Head of IT',
           timestamp: headItTimestamp,
           comments: headItComments,
@@ -883,6 +965,7 @@
           status: implementationStatus,
           statusLabel: implementationLabel,
           actor: officerName,
+          pfNumber: request.ict_officer_pf_number,
           position: 'ICT Officer',
           timestamp: officerTimestamp,
           comments: officerComments,
@@ -1175,7 +1258,13 @@
           result = { status: 'rejected', label: 'Rejected' }
         } else if (status === 'skipped' && (stage === 'divisional' || stage === 'hod')) {
           // Stage intentionally skipped (e.g., ICT Officer-origin request)
-          result = { status: 'completed', label: 'Skipped' }
+          // BUT check if it's actionable by the current user (e.g., HOD or Divisional Director correcting a skip)
+          if ((stage === 'divisional' && this.isDivisionalApprovalEditable) ||
+              (stage === 'hod' && this.isHodApprovalEditable)) {
+            result = { status: 'active', label: 'Pending' }
+          } else {
+            result = { status: 'completed', label: 'Skipped' }
+          }
         } else if (
           status === 'approved' ||
           (stage === 'ict_officer' && status === 'implemented') ||

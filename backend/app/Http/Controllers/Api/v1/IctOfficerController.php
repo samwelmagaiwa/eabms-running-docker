@@ -1435,6 +1435,7 @@ class IctOfficerController extends Controller
                         // HOD approval stage
                         'hod_status' => $request->hod_status,
                         'hod_name' => $request->hod_name,
+                        'hod_pf_number' => $request->resolveApproverPfNumber($request->hod_name),
                         'hod_comments' => $request->hod_comments,
                         'hod_signature_path' => $request->hod_signature_path,
                         'hod_approved_at' => $request->hod_approved_at,
@@ -1443,12 +1444,14 @@ class IctOfficerController extends Controller
                         // Divisional Director approval stage
                         'divisional_status' => $request->divisional_status,
                         'divisional_director_name' => $request->divisional_director_name,
+                        'divisional_pf_number' => $request->resolveApproverPfNumber($request->divisional_director_name),
                         'divisional_director_comments' => $request->divisional_director_comments,
                         'divisional_director_signature_path' => $request->divisional_director_signature_path,
                         'divisional_approved_at' => $request->divisional_approved_at,
                         // ICT Director approval stage
                         'ict_director_status' => $request->ict_director_status,
                         'ict_director_name' => $request->ict_director_name,
+                        'ict_director_pf_number' => $request->resolveApproverPfNumber($request->ict_director_name),
                         'ict_director_comments' => $request->ict_director_comments,
                         'ict_director_signature_path' => $request->ict_director_signature_path,
                         'ict_director_approved_at' => $request->ict_director_approved_at,
@@ -1456,12 +1459,14 @@ class IctOfficerController extends Controller
                         // Head of IT approval stage
                         'head_it_status' => $request->head_it_status,
                         'head_it_name' => $request->head_it_name,
+                        'head_it_pf_number' => $request->resolveApproverPfNumber($request->head_it_name),
                         'head_it_comments' => $request->head_it_comments,
                         'head_it_signature_path' => $request->head_it_signature_path,
                         'head_it_approved_at' => $request->head_it_approved_at,
                         // ICT Officer implementation stage
                         'ict_officer_status' => $request->ict_officer_status,
                         'ict_officer_name' => $request->ict_officer_name,
+                        'ict_officer_pf_number' => $request->resolveApproverPfNumber($request->ict_officer_name),
                         'ict_officer_user_id' => $request->ict_officer_user_id,
                         'ict_officer_assigned_at' => $request->ict_officer_assigned_at,
                         'ict_officer_started_at' => $request->ict_officer_started_at,

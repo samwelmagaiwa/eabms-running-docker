@@ -1651,7 +1651,7 @@
 
                                 <!-- Skipped indicator for HOD when request is from ICT Officer -->
                                 <div
-                                  v-else-if="isHodSkipped"
+                                  v-else-if="isHodSkipped && !isHodApprovalEditable"
                                   class="w-full px-3 py-2 border-2 border-red-400/60 rounded-xl bg-red-500/10 backdrop-blur-sm transition-all duration-300 shadow-lg min-h-[35px] flex items-center justify-center"
                                   title="HOD approval skipped"
                                 >
@@ -1857,7 +1857,7 @@
                                 />
                                 <div class="absolute right-3 top-1/2 transform -translate-y-1/2">
                                   <i
-                                    v-if="isHodSkipped"
+                                    v-if="isHodSkipped && !isHodApprovalEditable"
                                     class="fas fa-ban text-red-400 text-xs"
                                     title="HOD approval skipped"
                                   ></i>
@@ -4827,6 +4827,29 @@
           'ict_director',
           'dict'
         ].includes(role)
+      },
+
+      isHodApprovalEditable() {
+        // Active for HOD users while reviewing at the HOD stage
+        // OR when the stage was incorrectly skipped but they need to sign it
+        if (!this.isReviewMode || !this.requestData) return false
+
+        const userRole = (this.getUserRole() || '').toLowerCase().replace(/[\s-]+/g, '_')
+        const hodRoles = ['head_of_department', 'hod']
+
+        // Strict role check: If not an HOD, this section is never editable
+        if (!hodRoles.includes(userRole)) return false
+
+        // Normally editable if it's the current stage
+        if (this.currentApprovalStage === 'hod') return true
+
+        // Fix for incorrectly skipped stages
+        // If it's a new request and marked as skipped, allow HOD to sign
+        if (this.isHodSkipped && !this.requestData.hod_approved_at) {
+          return true
+        }
+
+        return false
       },
 
       isDivisionalApprovalEditable() {

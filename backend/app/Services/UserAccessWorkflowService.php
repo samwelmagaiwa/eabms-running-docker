@@ -698,8 +698,41 @@ class UserAccessWorkflowService
                 $base['hod_status'] = 'skipped';
                 $base['divisional_status'] = 'skipped';
                 $base['ict_director_status'] = 'pending';
+            } else {
+                // Normal user flow: dynamically check for department roles
+                $deptId = $request->department_id;
+                $dept = \App\Models\Department::find($deptId);
+                
+                // Skip HOD if not assigned
+                if (!$dept?->hod_user_id) {
+                    $base['hod_status'] = 'skipped';
+                    Log::info("Workflow Service: HOD stage skipped for Request - Department {$deptId} has no HOD user.");
+                } else {
+                    $base['hod_status'] = 'pending';
+                }
+                
+                // Skip Divisional if not configured AND no user assigned
+                $hasDivisional = $dept && ($dept->has_divisional_director || !empty($dept->divisional_director_id));
+                if (!$hasDivisional) {
+                    $base['divisional_status'] = 'skipped';
+                    Log::info("Workflow Service: Divisional stage skipped for Request - Department {$deptId} not configured for divisional.");
+                } else {
+                    $base['divisional_status'] = 'pending';
+                }
+                
+                // Adjust initial overall status based on skips
+                if ($base['hod_status'] === 'skipped') {
+                    if ($base['divisional_status'] === 'skipped') {
+                        $base['status'] = 'pending_ict_director';
+                    } else {
+                        $base['status'] = 'pending_divisional';
+                    }
+                } else {
+                    $base['status'] = 'pending_hod';
+                }
             }
         } catch (\Throwable $e) {
+            Log::error('Workflow Service: Error in dynamic skip detection: ' . $e->getMessage());
             // Fallback to default flow on any error determining role
         }
 
@@ -760,29 +793,34 @@ class UserAccessWorkflowService
             
             // HOD Approval
             'hod_name' => $request->hod_name,
+            'hod_pf_number' => $this->resolveApproverPfNumber($request, $request->hod_name),
             'hod_comments' => $request->hod_comments,
             'hod_approved_at' => $request->hod_approved_at?->format('Y-m-d H:i:s'),
             
             // Divisional Director
             'divisional_director_name' => $request->divisional_director_name,
+            'divisional_pf_number' => $this->resolveApproverPfNumber($request, $request->divisional_director_name),
             'divisional_director_signature_path' => $request->divisional_director_signature_path,
             'divisional_director_comments' => $request->divisional_director_comments,
             'divisional_approved_at' => $request->divisional_approved_at?->format('Y-m-d H:i:s'),
             
             // ICT Director
             'ict_director_name' => $request->ict_director_name,
+            'ict_director_pf_number' => $this->resolveApproverPfNumber($request, $request->ict_director_name),
             'ict_director_signature_path' => $request->ict_director_signature_path,
             'ict_director_comments' => $request->ict_director_comments,
             'ict_director_approved_at' => $request->ict_director_approved_at?->format('Y-m-d H:i:s'),
             
             // Head IT
             'head_it_name' => $request->head_it_name,
+            'head_it_pf_number' => $this->resolveApproverPfNumber($request, $request->head_it_name),
             'head_it_signature_path' => $request->head_it_signature_path,
             'head_it_comments' => $request->head_it_comments,
             'head_it_approved_at' => $request->head_it_approved_at?->format('Y-m-d H:i:s'),
             
             // ICT Officer
             'ict_officer_name' => $request->ict_officer_name,
+            'ict_officer_pf_number' => $this->resolveApproverPfNumber($request, $request->ict_officer_name),
             'ict_officer_signature_path' => $request->ict_officer_signature_path,
             'ict_officer_comments' => $request->ict_officer_comments,
             'ict_officer_implemented_at' => $request->ict_officer_implemented_at?->format('Y-m-d H:i:s'),
@@ -903,5 +941,33 @@ class UserAccessWorkflowService
         }
         
         return implode(', ', $types) ?: 'System Access';
+    }
+    /**
+     * Resolve PF number for an approver name by checking signatures or profile data
+     */
+    private function resolveApproverPfNumber(UserAccess $request, ?string $stageApproverName): ?string
+    {
+        if (!$stageApproverName || $stageApproverName === 'N/A') {
+            return null;
+        }
+
+        try {
+            // 1. Try to find via signatures relationship
+            $signature = $request->signatures()
+                ->whereHas('user', function ($q) use ($stageApproverName) {
+                    $q->where('name', $stageApproverName);
+                })->with('user')->first();
+
+            if ($signature && $signature->user) {
+                return $signature->user->pf_number;
+            }
+
+            // 2. Fallback: Search user by name directly
+            $user = \App\Models\User::where('name', $stageApproverName)->first();
+            return $user ? $user->pf_number : null;
+        } catch (\Exception $e) {
+            \Log::warning('Error resolving approver PF number in WorkflowService: ' . $e->getMessage());
+            return null;
+        }
     }
 }
