@@ -35,7 +35,7 @@ docker exec -u root eabms_backend php artisan view:clear
 
 # 6. Run database migrations
 echo "🗄️ Running migrations..."
-docker exec -u root eabms_backend php artisan migrate --force 2>&1 | grep -i "error" || true
+docker exec -u root eabms_backend php artisan migrate --force
 
 # 7. Reload Nginx to ensure it picks up the fresh volume files
 echo "📡 Reloading Nginx..."
